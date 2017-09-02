@@ -8,28 +8,30 @@ notes!
 
 ## The challenge
 
+The current practices of giving living organisms scientific names is based on
+Carl Linnaeus system of naming and classifying. However, Linnaeus main
+principle for classifying, morphological characteristics, has largely been
+replaced by more modern principles based on evolution and genetics. Modern
+evolutionary and genetic research means that there is a continous reevaluation
+of taxonomies and speciesi, which means it is quite common for species to be
+given new names or split into different species, also with new names.
+
 There are two well established sets of rules and recommendations for naming
-organisms and plants; [**ICZN** (International Code of Zoological Nomenclature)](http://www.iczn.org)
+animals and plants; [**ICZN** (International Code of Zoological Nomenclature)](http://www.iczn.org)
 and [**ICN** (International Code of Nomenclature for algae, fungi, and plants)](http://www.iapt-taxon.org/nomen/main.php).
-These codes only describe the naming of organisms and plats, not *how* they then
-should be classified into taxonomies.
+These codes only describe how names should be spelled and constructed, not
+*how* species should be classified into taxonomies.
 
-The basics for everything regarding scientific names goes back to Carl Linnaeus
-system of naming system and classification, although his morphological
-principles for classification have been replaced by more modern principles
-based on evolution and genetics.
-
-The questions of what constitues a species and what principles and criteria
-are to be applied in establishing the relationships between different species,
-and thus how to establish taxonomies, are complex and not entirely answered
-today. The question of *what* a species actually is is often refered to as the
+The question of *what* a species actually is is often refered to as the
 *species concept* question, and the answer to that question differs between
-biologists working with different organisms, since the *species concept* is
-tightly coupled to the mechanisms by which different organisms reproduce
-themselves. The principles that should be used for establishing relationships
-between species and, thus how taxonomies should be constructed, are today
-based on the view that a taxonomy should reflect the evolutionary history of
-the species in the taxonomy.
+biologists working with different organisms. One reason for the many different
+views is the fact that there is a large variation in how organisms reproduce
+themselves.
+
+The principles that should be used for establishing relationships between species
+and, thus how taxonomies should be constructed, are today based on the view
+that a taxonomy should reflect the evolutionary history of the species in the
+taxonomy.
 
 From a purely practical perspective, biologists working with these questions are
 also challenged with the practical problems of changing names and continuously
