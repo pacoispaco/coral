@@ -17,9 +17,9 @@ group of higher rank, thus creating a taxonomic hierarchy. The principal ranks
 in modern use are kingdom, phylum, class, order, family, genus and species. The
 Swedish botanist Carl Linnaeus is regarded as the father of taxonomy, as he
 developed a system known as Linnaean taxonomy for categorization of organisms
-and binomial nomenclature for naming organisms.
+and binomial nomenclature for naming organisms.*
 
-With the advent of such fields of study as phylogenetics, cladistics, and
+*With the advent of such fields of study as phylogenetics, cladistics, and
 systematics, the Linnaean system has progressed to a system of modern biological
 classification based on the evolutionary relationships between organisms, both
 living and extinct.* - [Introduction to the Wikipedia article on Taxonomy](https://en.wikipedia.org/wiki/Taxonomy_(biology))
