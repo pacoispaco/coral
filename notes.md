@@ -6,63 +6,55 @@ All my interest in experimenting with software for biological names and
 taxonomies began with my birding passion. That may be reflected in these
 notes!
 
-## The challenge
+## The basics of taxonomy
 
-The current practices of giving living organisms scientific names is based on
-Carl Linnaeus system of naming and classifying. However, Linnaeus main
-principle for classifying, morphological characteristics, has largely been
-replaced by more modern principles based on evolution and genetics. Modern
-evolutionary and genetic research means that there is a continous reevaluation
-of taxonomies and speciesi, which means it is quite common for species to be
-given new names or split into different species, also with new names.
+*Taxonomy (from Ancient Greek τάξις (taxis), meaning 'arrangement', and -νομία
+(-nomia), meaning 'method') is the science of defining and naming groups of
+biological organisms on the basis of shared characteristics. Organisms are
+grouped together into **taxa** (singular: **taxon**) and these groups are given
+a **taxonomic rank**; groups of a given rank can be aggregated to form a super
+group of higher rank, thus creating a taxonomic hierarchy. The principal ranks
+in modern use are kingdom, phylum, class, order, family, genus and species. The
+Swedish botanist Carl Linnaeus is regarded as the father of taxonomy, as he
+developed a system known as Linnaean taxonomy for categorization of organisms
+and binomial nomenclature for naming organisms.
 
-There are two well established sets of rules and recommendations for naming
-animals and plants; [**ICZN** (International Code of Zoological Nomenclature)](http://www.iczn.org)
-and [**ICN** (International Code of Nomenclature for algae, fungi, and plants)](http://www.iapt-taxon.org/nomen/main.php).
-These codes only describe how names should be spelled and constructed, not
-*how* species should be classified into taxonomies.
+With the advent of such fields of study as phylogenetics, cladistics, and
+systematics, the Linnaean system has progressed to a system of modern biological
+classification based on the evolutionary relationships between organisms, both
+living and extinct.* - [Introduction to the Wikipedia article on Taxonomy](https://en.wikipedia.org/wiki/Taxonomy_(biology))
 
-The question of *what* a species actually is is often refered to as the
-*species concept* question, and the answer to that question differs between
-biologists working with different organisms. One reason for the many different
-views is the fact that there is a large variation in how organisms reproduce
-themselves.
+There are two well established sets of rules and recommendations for how taxa
+should be named, one for animals; [**ICZN** (International Code of Zoological Nomenclature)](http://www.iczn.org)
+and one for plants; [**ICN** (International Code of Nomenclature for algae, fungi, and plants)](http://www.iapt-taxon.org/nomen/main.php). These codes only describe rules for how names should be constructed, not
+*how* taxa should be classified into taxonomies. These rules also cover cases
+where taxa are rearranged in a taxonomy, which in the case of taxa at the
+species and genus level, mean that the names of these taxa need to be changed.
 
-The principles that should be used for establishing relationships between species
-and, thus how taxonomies should be constructed, are today based on the view
-that a taxonomy should reflect the evolutionary history of the species in the
-taxonomy.
+## The purpose of the Twitchspot taxonomy system
 
-From a purely practical perspective, biologists working with these questions are
-also challenged with the practical problems of changing names and continuously
-revised taxonomies due to new research and insights. A given species may be
-given a new name and a new position in a taxonomy after research shows it to be
-related to a different group of species than previously thought. This leads to
-difficulties when searching for older publications of this species. Also,
-different biologist may have differing opinions on what name and what taxonomy
-is the correct one, which means that different taxonomies may be seen as correct
-by different groups of biologists.
+The main purpose of the system is to provide a number of read-only API services
+for searching for and looking up names of animals and plants, based on source
+data from authoratative sources. Apart from the scientific names, also vernacular
+names and popular collective names, representing higher ranked taxa, will be
+provided.
 
-All animals and plats that have had importance to humans have been given names,
-probably since the invention of language. Some animals and plants are of great
-importance in agriculture, husbandry and fishing as well as being of great
-interest to amateurs and hobbyists, so that there also exist many popular names
-and taxonomies in different languages. In many languages the same animal or
-plant can also have many names. So these names and and taxonomies suffer from
-similar problems and challenges as the scientific names and taxonomiesi do.
+To begin with I will try to handle birds. Eventually I'll try other living
+animals, as well as plants.
 
-All this adds upp to a rather interesting challenge for programmers trying to
-manage and represent this information in software systems!
+## Some challenges
 
-## A few words on taxonomic nomenclature
+There is very little structured data historical scientific names and
+classifications and changes made to taxonomies.
 
-*Taxonomy* refers both to the science of description, identification, naming and
-classification of organisms, and to actual concrete instances of classification.
-Sometimes the latter is also called a *classification*.
+Different authorities have different opinions on what is the correct taxonomy
+based on existing evidence.
 
-Organisms are grouped into *taxa* (singular *taxon*) and aranged in hierachical
-tree structures. The level of a taxon in a specific taxonomy is called its
-*taxonomic rank*.
+It can be difficult to present differences beteween different taxonomies or how
+taxa in different taxonomies are related to each other.
+
+Some languages have multiple synonym names for well known species as well as
+folksonomy based classifications that do not match current scientifice taxonomies.
 
 ## Let's start with birds!
 
@@ -82,7 +74,7 @@ of Birds* (1990). But there exist differing opinions on many species of birds,
 whether they should be split into other species or not, or classifed under
 other genus.
 
-A decent software system for bird names should be able to:
+The system for bird names should be able to:
 
  * Handle current scientific names
  * Handle current but multiple taxonomies
@@ -112,10 +104,10 @@ The main sources used in *Twitchspot taxonomy* are:
 
 ## References
 
-Here are some references to books I've read. Of course, the number of articles,
-both published and bloglike articles I've read, are to many to list (or remember)
-here!
+Here are some references to books I've read when studying the subject of
+taxonomy. Of course, the number of articles, both published and bloglike articles
+I've read, are to many to list (or remember) here!
 
- * [*Biological Systematics - Principles and Applications*, Randall T. Schuch, 2000]()
- * [*Describing Species*, Judith E. Winston, 1999]()
- * [*Species - A History of the Idea*, John S. Wilkins, 2009]()
+ * [*Biological Systematics - Principles and Applications*, Randall T. Schuch, 2000](https://www.amazon.com/Biological-Systematics-Principles-Applications-2nd/dp/0801447992)
+ * [*Describing Species*, Judith E. Winston, 1999](https://www.amazon.com/Describing-Species-Judith-Winston/dp/0231068255)
+ * [*Species - A History of the Idea*, John S. Wilkins, 2009](https://www.amazon.com/Species-History-Idea-Systematics/dp/0520271394)
