@@ -35,52 +35,51 @@ species and genus level, mean that the names of these taxa need to be changed.
 
 The main purpose of the system is to provide a number of read-only API services
 for searching for and looking up names of animals and plants, based on source
-data from authoratative sources. Apart from the scientific names, also vernacular
-names and popular collective names, representing higher ranked taxa, will be
-provided.
+data from authoratative sources.
 
-To begin with I will try to handle birds. Eventually I'll try other living
-animals, as well as plants.
+To begin with the system will handle bird names and taxonomies. Eventually I'll
+try other living animals, as well as plants.
+
+Today there is an estimated 11.000 different species of birds. If taxa for
+subspecies and higher taxa are inlcuded the total number of taxa is around
+25.000.
+
+Birds are a group of organisms that is fairly well researched and also for
+which there is a lot of active research going on. There has been a lot of
+renaming and reclassification the last 40 years and it is still going on. There
+are also differing opinions on a number of species and groups of species
+regarding both their species status as well as their classification. That means
+that there today exists a number of different taxonomies for birds, even though
+they mostly differ in details.
+
+Today, most scientific classifications and taxonomies for birds are based on
+Sibley and Monroes classification presented in *Phylogeny and Classification
+of Birds* (1990). But there exist differing opinions on a number of species of
+birds, whether they should be split into other species or not, or classifed
+under other genus.
+
+The system for bird names should be able to:
+
+ * Handle current scientific names
+ * Handle current but multiple taxonomies
+ * Handle different popular names in different languages
+ * Possibly relationships between taxa in different taxonomies
+ * Possibly handle older scientific names and taxonomies
 
 ## Some challenges
 
 There is very little structured data historical scientific names and
 classifications and changes made to taxonomies.
 
-Different authorities have different opinions on what is the correct taxonomy
+Different authorities have different opinions on what the correct taxonomy is
 based on existing evidence.
 
 It can be difficult to present differences beteween different taxonomies or how
 taxa in different taxonomies are related to each other.
 
 Some languages have multiple synonym names for well known species as well as
-folksonomy based classifications that do not match current scientifice taxonomies.
-
-## Let's start with birds!
-
-I like birds, so let's start there!
-
-Today there is an estimated 11.000 different species of birds. Birds are a group
-of organisms that is fairly well researched and also for which there is a lot of
-active research going on. There has been a lot of renaming and reclassification
-the last 40 years and it is still going on. There are also differing opinions
-on a number of species and groups of species regarding both their species status
-as well as their classification. That means that there today exists a number of
-different taxonomies for birds, even though they mostly differ in details.
-
-Today, most scientific classifications and taxonomies for birds are based on
-Sibley and Monroes classification presented in *Phylogeny and Classification
-of Birds* (1990). But there exist differing opinions on many species of birds,
-whether they should be split into other species or not, or classifed under
-other genus.
-
-The system for bird names should be able to:
-
- * Handle current scientific names
- * Handle current but multiple taxonomies
- * Handle relationships between taxa in different taxonomies
- * Handle different popular names
- * Possibly handle older scientific names and taxonomies
+popular names for groups of species that do not match current scientifice
+taxonomies.
 
 ### Sources of information on bird names and taxonomies
 
@@ -105,7 +104,7 @@ The main sources used in *Twitchspot taxonomy* are:
 ## References
 
 Here are some references to books I've read when studying the subject of
-taxonomy. Of course, the number of articles, both published and bloglike articles
+taxonomy. Of course, the number of articles, both published and blog articles
 I've read, are to many to list (or remember) here!
 
  * [*Biological Systematics - Principles and Applications*, Randall T. Schuch, 2000](https://www.amazon.com/Biological-Systematics-Principles-Applications-2nd/dp/0801447992)
