@@ -25,6 +25,19 @@ See the file [agpl.md](agpl.md) in this directory.
  * Flask
  * Docker for running the HTTP API server.
 
+### Setup development
+
+Set up a Python virtualenv in the top directory of this project:
+```bash
+$ virtualenv env
+```
+
+Jump into to the virtualenv and install required Python modules:
+```bash
+$ source env/bin/activate
+(env) $ pip install -r requirements.txt
+```
+
 ### Build
 
 ### Run locally
@@ -33,6 +46,6 @@ See the file [agpl.md](agpl.md) in this directory.
 
 ### Directory structure
 
- * 'data' contains taxonomic data from external sources
+ * 'data' contains taxonomic data files from external sources
  * 'taxonomyd' contains source code for the HTTP API server
  * 'src' contains source code for various data import and transformation scripts
