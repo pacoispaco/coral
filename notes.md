@@ -26,37 +26,35 @@ living and extinct.* - [Introduction to the Wikipedia article on Taxonomy](https
 
 There are two well established sets of rules and recommendations for how taxa
 should be named, one for animals; [**ICZN** (International Code of Zoological Nomenclature)](http://www.iczn.org)
-and one for plants; [**ICN** (International Code of Nomenclature for algae, fungi, and plants)](http://www.iapt-taxon.org/nomen/main.php). These codes only describe rules for how names should be constructed, not
-*how* taxa should be classified into taxonomies. These rules also cover cases
-where taxa are rearranged in a taxonomy, which in the case of taxa at the
-species and genus level, mean that the names of these taxa need to be changed.
+and one for plants; [**ICN** (International Code of Nomenclature for algae, fungi, and plants)](http://www.iapt-taxon.org/nomen/main.php).
+These codes only describe nomenclatural och formal rules for how names should
+be constructed and arranged in taxonomies, not the scientific and biological
+pinciples for deciding how taxa should be arranged in taxonomies.
 
 ## The purpose of the Twitchspot taxonomy system
 
 The main purpose of the system is to provide a number of read-only API services
-for searching for and looking up names of animals and plants, based on source
-data from authoratative sources.
+for searching for and looking up scientific and vernaculat names of animals and
+plants, based on source data from authoratative sources.
 
 To begin with the system will handle bird names and taxonomies. Eventually I'll
 try other living animals, as well as plants.
 
 Today there is an estimated 11.000 different species of birds. If taxa for
 subspecies and higher taxa are inlcuded the total number of taxa is around
-25.000.
+35.000.
 
 Birds are a group of organisms that is fairly well researched and also for
 which there is a lot of active research going on. There has been a lot of
 renaming and reclassification the last 40 years and it is still going on. There
-are also differing opinions on a number of species and groups of species
-regarding both their species status as well as their classification. That means
-that there today exists a number of different taxonomies for birds, even though
-they mostly differ in details.
+are also differing opinions in the scientific community on a number of species
+and groups of species regarding both their species status as well as their
+classification. That means that there today exists a number of different
+taxonomies for birds, even though they mostly differ in details.
 
 Today, most scientific classifications and taxonomies for birds are based on
 Sibley and Monroes classification presented in *Phylogeny and Classification
-of Birds* (1990). But there exist differing opinions on a number of species of
-birds, whether they should be split into other species or not, or classifed
-under other genus.
+of Birds* (1990). 
 
 The system for bird names should be able to:
 
@@ -68,18 +66,18 @@ The system for bird names should be able to:
 
 ## Some challenges
 
-There is very little structured data historical scientific names and
-classifications and changes made to taxonomies.
+ * There is very little structured on data historical scientific names and
+   classifications and changes made to taxonomies.
 
-Different authorities have different opinions on what the correct taxonomy is
-based on existing evidence.
+ * Different authorities have different opinions on what the correct taxonomy is
+   based on existing evidence.
 
-It can be difficult to present differences beteween different taxonomies or how
-taxa in different taxonomies are related to each other.
+ * It can be difficult to present differences beteween different taxonomies ori
+   how taxa in different taxonomies are related to each other.
 
-Some languages have multiple synonym names for well known species as well as
-popular names for groups of species that do not match current scientifice
-taxonomies.
+ * Some languages have multiple synonym names for well known species as well as
+   popular names for groups of species that do not match current scientifice
+   taxonomies.
 
 ### Sources of information on bird names and taxonomies
 
