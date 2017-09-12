@@ -34,8 +34,9 @@ pinciples for deciding how taxa should be arranged in taxonomies.
 ## The purpose of the Twitchspot taxonomy system
 
 The main purpose of the system is to provide a number of read-only API services
-for searching for and looking up scientific and vernaculat names of animals and
-plants, based on source data from authoratative sources.
+for searching for and looking up scientific and vernacular names in different
+languages of animals and plants, based on source data from authoratative
+sources.
 
 To begin with the system will handle bird names and taxonomies. Eventually I'll
 try other living animals, as well as plants.
@@ -54,7 +55,7 @@ taxonomies for birds, even though they mostly differ in details.
 
 Today, most scientific classifications and taxonomies for birds are based on
 Sibley and Monroes classification presented in *Phylogeny and Classification
-of Birds* (1990). 
+of Birds* (1990).
 
 The system for bird names should be able to:
 
@@ -72,7 +73,7 @@ The system for bird names should be able to:
  * Different authorities have different opinions on what the correct taxonomy is
    based on existing evidence.
 
- * It can be difficult to present differences beteween different taxonomies ori
+ * It can be difficult to present differences beteween different taxonomies or
    how taxa in different taxonomies are related to each other.
 
  * Some languages have multiple synonym names for well known species as well as
@@ -90,8 +91,8 @@ classification, there may exist differences in how the two list handles some
 species. A species with two subspecies in one list may be considered two
 different species in another list.
 
-For amateur ornothologists who want to keep track of which birds they've seen and
-who travel a lot, the current situation with names and name lists can be confusing!
+For amateur ornothologists who want to keep track of which birds they've seen,
+the current situation with names and name lists can be confusing!
 
 The main sources used in *Twitchspot taxonomy* are:
 
