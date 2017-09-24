@@ -23,9 +23,9 @@ TYPE_UNRECOGNIZED_FILE = 5
 file_types = {TYPE_IOC_MASTER_FILE: "IOC Master file",
               TYPE_IOC_OTHER_LISTS_FILE: "IOC Other lists file",
               TYPE_IOC_MULTILINGUAL_FILE: "IOC Multilingual file",
-              TYPE_IOC_COMPLEMENTARY_FILE: "IOC COmplementary file",
+              TYPE_IOC_COMPLEMENTARY_FILE: "IOC Complementary file",
               TYPE_UNRECOGNIZED_FILE: "Unrecognized file"}
-DEFAULT_WRITE_DIR = "./ts_iou-data"
+DEFAULT_WRITE_DIR = "./ts_ioc-data"
 
 # Globals
 # Object containing representation of file contents
@@ -37,8 +37,10 @@ file_info = {'infraclass_count': 0,
              'genus_count': 0,
              'species_count': 0,
              'subspecies_count': 0}
-# IOC taxonomy as parsed from the file
+# IOC taxonomy as parsed from the IOC Master file
 taxonomy = []
+# IOC taxonomy as parsed from the IOC other lists file
+taxonomy_ol = []
 
 def kind_of_ioc_file (workbook):
     """Return a tuple containing of the type and version of IOC file."""
@@ -222,6 +224,7 @@ def main():
             print ("Error: File '%s' not found." % (file))
             sys.exit (ERROR_FILE_NOT_FOUND)
     # Then read the files in correct order
+    # files = sort_files_according_to_type (args_ioc_files) TBD!
     for file in args.ioc_files:
         read_file (file, args.verbose)
         if args.info:
