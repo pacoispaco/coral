@@ -15,6 +15,10 @@ import pprint
 # Error constants
 ERROR_FILE_NOT_FOUND = 1
 ERROR_FILE_NOT_EXCEL = 2
+ERROR_DATA_DIR_EXISTS_ALREADY = 3
+ERROR_NO_MASTER_DATA = 4
+ERROR_INCONSISTENT_VERSIONS = 5
+
 # File type constants. The value also denotes the order in which these files
 # should be read
 TYPE_IOC_MASTER_FILE = 1
@@ -27,7 +31,10 @@ file_types = {TYPE_IOC_MASTER_FILE: "IOC Master file",
               TYPE_IOC_MULTILINGUAL_FILE: "IOC Multilingual file",
               TYPE_IOC_COMPLEMENTARY_FILE: "IOC Complementary file",
               TYPE_UNRECOGNIZED_EXCEL_FILE: "Unrecognized Excel file"}
+
+# Directory and file name constants
 DEFAULT_IOC_DIR = "./data-ioc"
+VERSION_FILE_NAME = "version.json"
 
 # Globals
 # Object containing representation of file contents
@@ -41,6 +48,7 @@ file_stats = {'infraclass_count': 0,
               'subspecies_count': 0}
 # IOC taxonomy as parsed from the IOC Master file
 master_taxonomy = []
+taxonomy_version = None
 # IOC taxonomy as parsed from the IOC other lists file
 taxonomy_ol = []
 ioc_dir = DEFAULT_IOC_DIR
@@ -175,14 +183,21 @@ def write_taxon_to_file (directory, taxon):
     f.write (json.dumps (taxon))
     f.close ()
 
-def write_master_taxonomy_to_files (verbose):
+def write_master_taxonomy_to_files (version, verbose):
     """Write JSON representations of the taxa in the master taxonomy to files."""
+    global taxonomy_version
     if verbose:
         print ("Writing to files ...")
     if os.path.exists (DEFAULT_IOC_DIR):
         print ("Error: Directory '%s' already exists." % (DEFAULT_IOC_DIR))
+        sys.exit (ERROR_DATA_DIR_EXISTS_ALREADY)
     else:
         os.makedirs(DEFAULT_IOC_DIR)
+    f = open (os.path.join (DEFAULT_IOC_DIR, VERSION_FILE_NAME), 'w')
+    v = {"version": version}
+    f.write (json.dumps (v))
+    f.close ()
+    taxonomy_version = version
     for taxon in master_taxonomy:
         write_taxon_to_file (DEFAULT_IOC_DIR, taxon)
 
@@ -210,7 +225,11 @@ def load_ioc_subtaxa (taxon):
 
 def load_ioc_taxonomy (verbose):
     """Load IOC taxonomy from files."""
-    global master_taxonomy, master_taxonomy_index
+    global master_taxonomy, master_taxonomy_index, taxonomy_version
+    # Read version
+    f = open (os.path.join (DEFAULT_IOC_DIR, VERSION_FILE_NAME))
+    taxonomy_version = json.load (f)["version"]
+    f.close ()
     # Read infraclasses:
     p = os.popen ("grep -l '\"rank\": \"Infraclass\"' %s/*.json" % (ioc_dir))
     filenames = p.read ().split ()
@@ -229,16 +248,27 @@ def print_to_stdout (verbose):
         print ("Printing to stdout ...")
     print (json.dumps (master_taxonomy, indent=2))
 
-def print_info (verbose):
+def print_taxonomy_info (verbose):
     """Print info on IOC taxonomy to stdout."""
-    if verbose:
-        print ("Printing info on '%s' ..." %(file_stats['name']))
-    print ("Infraclass count: %d" % (file_stats['infraclass_count']))
-    print ("Order count: %d" % (file_stats['order_count']))
-    print ("Family count: %d" % (file_stats['family_count']))
-    print ("Genus count: %d" % (file_stats['genus_count']))
-    print ("Species count: %d" % (file_stats['species_count']))
-    print ("Subspecies count: %d" % (file_stats['subspecies_count']))
+    print ("Taxonomy: IOC %s" % (taxonomy_version))
+    print ("Infraclasses: %d" % (file_stats['infraclass_count']))
+    print ("Orders: %d" % (file_stats['order_count']))
+    print ("Families: %d" % (file_stats['family_count']))
+    print ("Genus: %d" % (file_stats['genus_count']))
+    print ("Species: %d" % (file_stats['species_count']))
+    print ("Subspecies: %d" % (file_stats['subspecies_count']))
+    print ("Total number of taxa: %d" % (file_stats['infraclass_count'] +
+                                         file_stats['family_count'] +
+                                         file_stats['order_count'] +
+                                         file_stats['genus_count'] +
+                                         file_stats['species_count'] +
+                                         file_stats['subspecies_count']))
+
+def print_version_info (file_infos):
+    """Print version info."""
+    print ("Taxonomy version: %s" % (taxonomy_version))
+    for x in file_infos:
+        print ("File name: '%s', version: %s" % (x["filename"], x["version"]))
 
 def handle_files (file_names, write, info, verbose):
     """Handle the IOC files. if 'write' then write data to files. If 'info'
@@ -257,7 +287,7 @@ def handle_files (file_names, write, info, verbose):
     if not file_infos or not file_infos[0]['type'] == TYPE_IOC_MASTER_FILE:
         if not os.path.exists (ioc_dir):
             print ("Error: No master data in '%s' and no IOC Master File to read." % (ioc_dir))
-            sys.exit (3)
+            sys.exit (ERROR_NO_MASTER_DATA)
         elif verbose:
             print ("Using existing master data in '%s' ..." % (ioc_dir))
         load_ioc_taxonomy (verbose)
@@ -267,7 +297,12 @@ def handle_files (file_names, write, info, verbose):
             print ("Handling the IOC Master file ...")
         read_ioc_master_file (file_infos[0]['filename'])
         if write:
-            write_master_taxonomy_to_files (verbose)
+            write_master_taxonomy_to_files (file_infos[0]['version'], verbose)
+    # Check that the taxonomy version is the same in all files
+    if not all ([x["version"] == file_infos[0]["version"] for x in file_infos]):
+        print ("Error: Inconsistent version numbers in files and/or existing taxomy files")
+        print_version_info (file_infos)
+        sys.exit (ERROR_INCONSISTENT_VERSIONS)
     # Now read and handle the rest of the files in the correct order.
     if verbose:
         print ("Reading other IOC files ...")
@@ -278,7 +313,7 @@ def handle_files (file_names, write, info, verbose):
     else:
         print_to_stdout (verbose)
     if info:
-        print_info (verbose)
+        print_taxonomy_info (verbose)
 
 def main():
     parser = argparse.ArgumentParser (description='Read IOC World Bird List\
