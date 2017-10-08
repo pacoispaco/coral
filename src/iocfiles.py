@@ -2,10 +2,9 @@
 
 """This module contains methods and classes for reading IOC files."""
 
-import os, os.path, sys
+import os, os.path
 import openpyxl.reader.excel as xlxs
 import re
-import json
 
 class InvalidIocMasterFile (Exception):
     pass
