@@ -1,17 +1,14 @@
 # Readme for twitchspot-taxonomy
 
-Taxonomy system for Twitchspot. Serves information on biological taxonomies and
-species names.
+Twitchspot is the name of my personal project for experimenting with different
+programming languages and technologies for manipulating and serving information 
+on biological taxonomies and names, as well as different solutions for creating
+checklists and reporting observations. This has been an ongoing project, with
+very varying commitment for around 20 years.
 
-This is part of a personal project that has been going on, with very variable
-commitment (!), for around 20 years. The purpose of the project has been to
-experiment with both different programming languages and technologies for
-manipulating and serving information on biological taxonomies and names, as
-well as different solutions for creating checklists and reporting observations.
-
-Twitchspot is the general name of this personal project. This project is a
-simpler approach on managing world lists of bird names and providing a simple read
-only HTTP API for accessing this information.
+Twitchspot-taxonomy is an HTTP API that serves information on biological
+taxonomies and species names. It also comprises a few command line tools for
+importing taxonomical data to the system from different sources.
 
 Copyright (C) 1998-2017 Paul Cohen.
 This software is licensed under the GNU Affero General Public License version 3.
@@ -40,9 +37,15 @@ $ source env/bin/activate
 
 ### Build
 
+TBD.
+
 ### Run locally
 
+TBD.
+
 ### Tests
+
+TBD.
 
 ### Directory structure
 
