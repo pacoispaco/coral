@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
-# This program reads IOC World Bird List files and prints JSON representations
-# of that data to stdout, or to files.
+"""This program reads IOC World Bird List files and prints JSON representations
+   of that data to stdout, or to files."""
 
 import argparse
 import os, os.path, sys
@@ -145,12 +145,6 @@ def print_taxonomy_info (verbose, stats):
                                          stats['genus_count'] +
                                          stats['species_count'] +
                                          stats['subspecies_count']))
-
-def print_version_info (file_infos):
-    """Print version info."""
-    print ("Taxonomy version: %s" % (taxonomy_version))
-    for x in file_infos:
-        print ("File name: '%s', version: %s" % (x["filename"], x["version"]))
 
 def handle_files (filepaths, write, info, verbose):
     """Handle the IOC files. if 'write' then write data to files. If 'info'
