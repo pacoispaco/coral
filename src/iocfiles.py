@@ -193,7 +193,8 @@ class IocOtherListsFile (object):
                                'family_count': 0,
                                'genus_count': 0,
                                'species_count': 0,
-                               'subspecies_count': 0}
+                               'subspecies_count': 0,
+                               'only_in_other_lists_count': 0}
         ws = self.workbook.worksheets[0]
         for row in ws.iter_rows (min_row=2):
             name = row[1].value
@@ -231,9 +232,17 @@ class IocOtherListsFile (object):
                                              'ioc_7_1': {'name': None,
                                                          'group': None,
                                                          'family': row[26].value}}}
+            if name:
+                if len (name.split ()) == 2:
+                    self.taxonomy_stats['species_count'] += 1
+                else:
+                    self.taxonomy_stats['subspecies_count'] += 1
+            else:
+                self.taxonomy_stats['only_in_other_lists_count'] += 1
 
 class IocMultilingualFile (object):
-    """Represents a IOC Multilingual file."""
+    """Represents a IOC Multilingual file. Languages are encoded with ISO 639-2
+       codes."""
 
     def __init__ (self, workbook, path):
         """Initialize with the Excel 'workbook'."""
@@ -241,7 +250,8 @@ class IocMultilingualFile (object):
         self.workbook = workbook
         self.path = path
         self.version = None
-        self.taxonomy = []
+        self.taxonomy = {}          # This object contains taxa indexed by their
+                                    # name
         self.taxonomy_stats = {}
         if self.workbook.worksheets[0].title == "List" and self.workbook.worksheets[1].title == "Sources":
             s = self.workbook.worksheets[1].cell (row=1, column=1).value
@@ -262,6 +272,45 @@ class IocMultilingualFile (object):
                                'genus_count': 0,
                                'species_count': 0,
                                'subspecies_count': 0}
+        ws = self.workbook.worksheets[0]
+        i = 0
+        for row in ws.iter_rows (min_row=4):
+            if row[3].value and len (row[3].value.split ()) == 2:
+                name = row[3].value
+                self.taxonomy_stats['species_count'] += 1
+                i = 1
+                entry = {'name': name,
+                         'cat': row[6].value,
+                         'cze': row[9].value,
+                         'est': row[12].value,
+                         'ger': row[15].value,
+                         'ind': row[18].value,
+                         'lav': row[21].value,
+                         'pol': row[24].value,
+                         'slo': row[27].value,
+                         'swe': row[30].value}
+            elif i == 1:
+                i = 2
+                entry['eng'] = row[4].value
+                entry['chi'] = row[7].value
+                entry['dan'] = row[10].value
+                entry['fin'] = row[13].value
+                entry['hun'] = row[16].value
+                entry['ita'] = row[19].value
+                entry['lit'] = row[22].value
+                entry['por'] = row[25].value
+                entry['slv'] = row[28].value
+            elif i == 2:
+                i = 0
+                entry['lzh'] = row[8].value
+                entry['dut'] = row[11].value
+                entry['fre'] = row[14].value
+                entry['ice'] = row[17].value
+                entry['jpn'] = row[20].value
+                entry['nno'] = row[23].value
+                entry['rus'] = row[26].value
+                entry['spa'] = row[29].value
+                self.taxonomy[name] = entry
 
 class IocComplementaryFile (object):
     """Represents a IOC COmplementary file."""
@@ -272,7 +321,8 @@ class IocComplementaryFile (object):
         self.workbook = workbook
         self.path = path
         self.version = None
-        self.taxonomy = []
+        self.taxonomy = {}          # This object contains taxa indexed by their
+                                    # name
         self.taxonomy_stats = {}
         if "IOC" in self.workbook.worksheets[0].title:
             s = self.workbook.worksheets[0].title
@@ -293,5 +343,55 @@ class IocComplementaryFile (object):
                                'genus_count': 0,
                                'species_count': 0,
                                'subspecies_count': 0}
-
-
+        ws = self.workbook.worksheets[0]
+        i = 0
+        for row in ws.iter_rows (min_row=3):
+            if row[2].value == "Blank":
+                name = row[6].value
+                self.taxonomy[name] = {'name': name,
+                                       'rank': 'Infraclass',
+                                       'code': row[10].value,
+                                       'comment': row[11].value}
+            elif row[2].value == "ORDER":
+                name = row[6].value.split ()[1],
+                self.taxonomy[name] = {'name': name,
+                                       'rank': 'Order',
+                                       'code': row[10].value,
+                                       'comment': row[11].value}
+            elif row[2].value == "Family":
+                name = row[6].value.split ()[1]
+                self.taxonomy[name] = {'species_count': row[3].value,
+                                       'name_eng': row[4].value,
+                                       'name': name,
+                                       'rank': 'Family',
+                                       'code': row[10].value,
+                                       'comment': row[11].value}
+            elif row[2].value == "Genus":
+                name = row[6].value
+                self.taxonomy[name] = {'name': name,
+                                       'rank': 'Genus',
+                                       'authority': row[7].value,
+                                       'code': row[10].value,
+                                       'comment': row[11].value}
+            elif row[2].value == "Species":
+                name = row[6].value
+                self.taxonomy[name] = {'name': name,
+                                       'rank': 'Species',
+                                       'name_eng': row[4].value,
+                                       'authority': row[7].value,
+                                       'breeding_range': row[8].value,
+                                       'nonbreeding_range': row[9].value,
+                                       'code': row[10].value,
+                                       'comment': row[11].value}
+                species = row[6].value
+            elif row[2].value == "ssp":
+                name = species + ' ' + row[6].value.split ()[2]
+                self.taxonomy[name] = {'extinct': row[3].value,
+                                       'name': name,
+                                       'rank': 'Subspecies',
+                                       'name_eng': row[4].value,
+                                       'authority': row[7].value,
+                                       'breeding_range': row[8].value,
+                                       'nonbreeding_range': row[9].value,
+                                       'code': row[10].value,
+                                       'comment': row[11].value}
