@@ -102,7 +102,8 @@ class IocMasterFile (object):
             genus = row[4].value
             species = row[5].value
             subspecies = row[6].value
-            taxon = {'authority': row[7].value,
+            taxon = {'listnames': ['ioc'],
+                     'authority': row[7].value,
                      'names': {'en': {'ioc': row[8].value}},
                      'breeding_range': row[9].value,
                      'breeding_subranges': row[10].value,
