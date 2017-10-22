@@ -23,7 +23,8 @@ ERROR_NO_MASTER_DATA = 4
 DEFAULT_IOC_DIR = "./data-ioc"
 VERSION_FILE_NAME = "version.json"
 
-class IocTaxonomy (object):
+class IocWbl (object):
+    """Representation of IOC World Bird List"""
 
     def __init__ (self):
         self.taxonomy = []
@@ -60,7 +61,7 @@ def write_taxon_to_file (directory, taxon):
     f.write (json.dumps (taxon))
     f.close ()
 
-def write_master_taxonomy_to_files (ioc_taxonomy, verbose):
+def write_master_taxonomy_to_files (iocwbl, verbose):
     """Write JSON representations of the taxa in the master taxonomy to files."""
     if verbose:
         print ("Writing to files ...")
@@ -70,13 +71,13 @@ def write_master_taxonomy_to_files (ioc_taxonomy, verbose):
     else:
         os.makedirs(DEFAULT_IOC_DIR)
     f = open (os.path.join (DEFAULT_IOC_DIR, VERSION_FILE_NAME), 'w')
-    v = {"version": ioc_taxonomy.version}
+    v = {"version": iocwbl.version}
     f.write (json.dumps (v))
     f.close ()
-    for taxon in ioc_taxonomy.taxonomy:
+    for taxon in iocwbl.taxonomy:
         write_taxon_to_file (DEFAULT_IOC_DIR, taxon)
 
-def load_ioc_subtaxa (ioc_taxonomy, taxon, ioc_dir):
+def load_ioc_subtaxa (iocwbl, taxon, ioc_dir):
     """Load the subtaxa for the given taxon."""
     i = 0
     for name in taxon['subtaxa']:
@@ -85,23 +86,23 @@ def load_ioc_subtaxa (ioc_taxonomy, taxon, ioc_dir):
         f.close ()
         taxon['subtaxa'][i] = t
         if t['rank'] == "Order":
-            ioc_taxonomy.stats['order_count'] += 1
+            iocwbl.stats['order_count'] += 1
         elif t['rank'] == "Family":
-            ioc_taxonomy.stats['family_count'] += 1
+            iocwbl.stats['family_count'] += 1
         elif t['rank'] == "Genus":
-            ioc_taxonomy.stats['genus_count'] += 1
+            iocwbl.stats['genus_count'] += 1
         elif t['rank'] == "Species":
-            ioc_taxonomy.stats['species_count'] += 1
+            iocwbl.stats['species_count'] += 1
         elif t['rank'] == "Subspecies":
-            ioc_taxonomy.stats['subspecies_count'] += 1
-        load_ioc_subtaxa (ioc_taxonomy, t, ioc_dir)
+            iocwbl.stats['subspecies_count'] += 1
+        load_ioc_subtaxa (iocwbl, t, ioc_dir)
         i += 1
 
-def load_ioc_taxonomy (ioc_taxonomy, ioc_dir, verbose):
+def load_ioc_taxonomy (iocwbl, ioc_dir, verbose):
     """Load IOC taxonomy from files."""
     # Read version
     f = open (os.path.join (DEFAULT_IOC_DIR, VERSION_FILE_NAME))
-    ioc_taxonomy.version = json.load (f)["version"]
+    iocwbl.version = json.load (f)["version"]
     f.close ()
     # Read infraclasses:
     p = os.popen ("grep -l '\"rank\": \"Infraclass\"' %s/*.json" % (ioc_dir))
@@ -111,38 +112,38 @@ def load_ioc_taxonomy (ioc_taxonomy, ioc_dir, verbose):
         f = open (fname)
         taxon = json.load (f)
         f.close ()
-        ioc_taxonomy.taxonomy.append (taxon)
-        load_ioc_subtaxa (ioc_taxonomy, taxon, ioc_dir)
-        ioc_taxonomy.stats['infraclass_count'] += 1
+        iocwbl.taxonomy.append (taxon)
+        load_ioc_subtaxa (iocwbl, taxon, ioc_dir)
+        iocwbl.stats['infraclass_count'] += 1
 
-def print_to_stdout (ioc_taxonomy, verbose):
+def print_to_stdout (iocwbl, verbose):
     """Print JSON representations to stdout."""
     if verbose:
         print ("Printing to stdout ...")
-    print (json.dumps (ioc_taxonomy.taxonomy, indent=2))
+    print (json.dumps (iocwbl.taxonomy, indent=2))
 
-def print_taxonomy_info (ioc_taxonomy, verbose):
+def print_taxonomy_info (iocwbl, verbose):
     """Print info on IOC taxonomy to stdout."""
     print ("Taxonomy statistics:")
-    print ("  Taxonomy: IOC %s" % (ioc_taxonomy.version))
-    print ("  Infraclasses: %d" % (ioc_taxonomy.stats['infraclass_count']))
-    print ("  Orders: %d" % (ioc_taxonomy.stats['order_count']))
-    print ("  Families: %d" % (ioc_taxonomy.stats['family_count']))
-    print ("  Genus: %d" % (ioc_taxonomy.stats['genus_count']))
-    print ("  Species: %d" % (ioc_taxonomy.stats['species_count']))
-    print ("  Subspecies: %d" % (ioc_taxonomy.stats['subspecies_count']))
-    print ("  Total number of taxa: %d" % (ioc_taxonomy.stats['infraclass_count'] +
-                                           ioc_taxonomy.stats['family_count'] +
-                                           ioc_taxonomy.stats['order_count'] +
-                                           ioc_taxonomy.stats['genus_count'] +
-                                           ioc_taxonomy.stats['species_count'] +
-                                           ioc_taxonomy.stats['subspecies_count']))
+    print ("  Taxonomy: IOC %s" % (iocwbl.version))
+    print ("  Infraclasses: %d" % (iocwbl.stats['infraclass_count']))
+    print ("  Orders: %d" % (iocwbl.stats['order_count']))
+    print ("  Families: %d" % (iocwbl.stats['family_count']))
+    print ("  Genus: %d" % (iocwbl.stats['genus_count']))
+    print ("  Species: %d" % (iocwbl.stats['species_count']))
+    print ("  Subspecies: %d" % (iocwbl.stats['subspecies_count']))
+    print ("  Total number of taxa: %d" % (iocwbl.stats['infraclass_count'] +
+                                           iocwbl.stats['family_count'] +
+                                           iocwbl.stats['order_count'] +
+                                           iocwbl.stats['genus_count'] +
+                                           iocwbl.stats['species_count'] +
+                                           iocwbl.stats['subspecies_count']))
 
 def handle_files (filepaths, write, info, verbose):
     """Handle the IOC files. if 'write' then write data to files. If 'info'
        then print information on the contents of the files. If 'verbose'
        then print information on progress and what's happening."""
-    ioc_taxonomy = IocTaxonomy ()
+    iocwbl = IocWbl ()
     ioc_files = sorted_ioc_files (filepaths)
     if verbose:
         print ("IOC Version: %s" % (ioc_files[0].version))
@@ -151,35 +152,35 @@ def handle_files (filepaths, write, info, verbose):
         if verbose:
             print ("Reading IOC Master File %s ..." % (ioc_files[0].path))
         ioc_files[0].read ()
-        ioc_taxonomy.taxonomy = ioc_files[0].taxonomy
-        ioc_taxonomy.stats = ioc_files[0].taxonomy_stats
+        iocwbl.taxonomy = ioc_files[0].taxonomy
+        iocwbl.stats = ioc_files[0].taxonomy_stats
     else:
         if not os.path.exists (ioc_dir):
             print ("Error: No master data in '%s' and no IOC Master File to read." % (ioc_dir))
             sys.exit (ERROR_NO_MASTER_DATA)
         elif verbose:
             print ("Loading existing master data from '%s' ..." % (ioc_dir))
-        load_ioc_taxonomy (ioc_taxonomy, ioc_dir, verbose)
+        load_ioc_taxonomy (iocwbl, ioc_dir, verbose)
     # Now read and handle the rest of the files in the correct order.
     for ioc_file in ioc_files[1:]:
         if type (ioc_file) == IocOtherListsFile:
             if verbose:
                 print ("Reading IOC Other Lists file '%s' ..." % (ioc_dir))
-            pass
+            ioc_file.read ()
         elif type (ioc_file) == IocMultilingualFile:
             if verbose:
                 print ("Reading IOC Multilingual file '%s' ..." % (ioc_dir))
-            pass
+            ioc_file.read ()
         elif type (ioc_file) == IocComplementaryFile:
             if verbose:
                 print ("Reading IOC Complementary file '%s' ..." % (ioc_dir))
-            pass
+            ioc_file.read ()
     if write:
-        write_master_taxonomy_to_files (ioc_taxonomy, verbose)
+        write_master_taxonomy_to_files (iocwbl, verbose)
     else:
-        print_to_stdout (ioc_taxonomy, verbose)
+        print_to_stdout (iocwbl, verbose)
     if info:
-        print_taxonomy_info (ioc_taxonomy, verbose)
+        print_taxonomy_info (iocwbl, verbose)
 
 def main():
     parser = argparse.ArgumentParser (description='Read IOC World Bird List\
