@@ -36,13 +36,13 @@ Commission on Zoological Nomenclature)](http://iczn.org) and the [ICN
 and the rules for species names is based on binomial nomenclature system
 invented by Carl Linnaeus. These rules cover both the valid forms of names as
 well as the criteria for deciding which name is valid, in the case of the same
-taxa being given different names.
+taxa being described but given different names by different authors.
 
 To summarize; a taxon is always:
 
  * identified by a name,
  * described by a concept and
- * at the species and subspecies level, is associated with a **type specimen**.
+ * at the species and subspecies level, is associated with a type specimen.
 
 At any given time there may exist different taxonomies for the same group of
 organisms, due to the fact that there are different scientific opinions on how
