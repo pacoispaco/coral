@@ -208,6 +208,14 @@ we choose should be guided by two basic considerations; ease of comprehension
 and suitability for the most important operations we may wish to perform on the
 taxonomies.
 
+The most important operations we are considering here are:
+
+ * Fast lookup on scientific name and support for auto-complete search.
+ * Fast lookup on common names and support for auto-complete search.
+ * Fast listing of taxa in taxonomical order.
+ * Fast access to supertaxa and subtaxa of a given taxon.
+ * Fast access to synonyms and homonyms of a given taxon.
+
 Here I will use [JSON](http://json.org) which is a simple and widely used data
 format that supports representing hierarchical structures as well as sets. I
 will first present the data structure by example instead of by specification.
@@ -268,3 +276,16 @@ sylvia_inornata_iberiae.json
 sylvia_subalpina.json
 ```
 
+These JSON files could then be indexed by scientific name as well as by common
+names, for fast retrieval and it would also be fast to browse the hirarchical
+structure under or below a given taxon since we have a direct mapping of subtaxa
+and supertaxon names to file names. Of course, we could also store the JSON-data
+in a key-value store or document database and preferably have all the data in
+RAM for fast access.
+
+### Reading and parsing source data files with taxonomic data
+
+For taxonomies and taxa lists for birds the most common data formats are Excel,
+CSV and XML. Reading and parsing these formats in order to construct a data
+representation of them as described above presents a number of challenges due
+to implicit assumptions made in many of the available data sources. 
