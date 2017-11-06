@@ -7,46 +7,47 @@ are recognized and grouped with the purpose of understanding their
 **phylogenetic** (evolutionary) relationships. The grouping of organisms is
 based on their characteristics and today the most important characteristics are
 genetic, but other characteristics that can be used are morphological (external
-appearance), physiological (internal properties), behavioral, ecological and
-geographic characters.
-
-The most fundamental kind of classification is done at the **species** level andi
-at the closely related **subspecies** and **genus** levels.
-
-A species is defined by a **concept** consisting of a description and the
-characteristics that differentiate it from other species. In order to actually
-have some tangible connection to actual living organisms there must also exist
-at least one actual physical specimen that is identified as the **type
-specimen** of the species. Such physical specimens must be identified in the
-original paper describing the species, and they are kept in storage at
-biological institutions so that biologists can examine them if the need for
-reclassification should arise.
-
-Species are then classified into groups called genus and in each genus one of
-its species is defined as the **type species** of that genus. Genus are then
-grouped into familes and they in turn, are grouped into higher and higher
-**ranks** of groups.
+appearance), physiological, behavioral, ecological and geographic characters.
 
 The general name in biological classification for these groups is **taxa**
-(singular **taxon**) and a specific concrete classification of taxa is called
-a **taxonomy**.
+(singular **taxon**) and taxa are arranged in hierarchical classification
+structures called **taxonomies** (singular **taxonomy**).
 
-It is important to remember that each taxon is:
+The most fundamental kind of taxa are **species** and **subspecies** which are
+categorisations of actual living organisms. When scientists describe a species
+or a subspecies they must always have at least one physical specimen on which
+their description is based. These so called **type specimens** are placed in
+storage at biological institutions so that other scientists can examine them if
+the need for reclassification should arise.
 
- * identified by a name,
- * described by a concept and
- * at the species level, is associated with a **type specimen**.
+Species are then grouped into taxa called **genus** and one of the species in
+each genus is designated the **type species**, which ican be said to indicate
+the typical species of that genus. Genus are then categorised into **familes**
+and they in turn, are grouped into higher and higher **ranks** of taxa.
+
+Each taxon, including genus, species and subspecies are defined by a **concept**
+consisting of a description and the characteristics that differentiate it from
+other taxa. By concept we mean here the actual description of the taxa and the
+so called **diagnosis** of the taxa; what are its unique characters and what
+makes it distinct with regard to other closely taxa.  
 
 The naming of taxa is based on rules defined by the [ICZN (International
 Commission on Zoological Nomenclature)](http://iczn.org) and the [ICN
 (International Code of Nomenclature for algae, fungi and plants)](http://www.iapt-taxon.org/nomen/main.php)
 and the rules for species names is based on binomial nomenclature system
-invented by Carl Linnaeus. These rules also cover conditions for when a
-name is valid and available.
+invented by Carl Linnaeus. These rules cover both the valid forms of names as
+well as the criteria for deciding which name is valid, in the case of the same
+taxa being given different names.
 
-At any given time there may exist different taxonomies for the same group
-of organisms, due to the fact that there are different opinions on how to
-classify these organisms. It is important to understand that just because
+To summarize; a taxon is always:
+
+ * identified by a name,
+ * described by a concept and
+ * at the species and subspecies level, is associated with a **type specimen**.
+
+At any given time there may exist different taxonomies for the same group of
+organisms, due to the fact that there are different scientific opinions on how
+to classify these organisms. It is important to understand that just because
 two taxa in different taxonomies **share the same name, they do not
 neccessarily share the same concept**. It may also be the case that two
 taxa in different taxonomies **have different names but actually share the
@@ -54,28 +55,46 @@ same concept**.
 
 ## The problem of multiple taxonomies and names
 
-To illustrate the complexity and constant evolving character of taxonomy, as
+To illustrate the complexity and constantly evolving character of taxonomy, as
 well as the differing opinions on names, we will look at a group of warblers
-informally grouped under the informal name of **subalpine warblers**.
+informally grouped under the name, **subalpine warblers**.
 
 ![Subalpine warblers](subalppainting-annotated.jpg)
 *Image taken from [this article on identifying subalpine warblers in the field
 by Brian J. Small](http://surfbirds.com/Features/subalpine13/main.html)*.
 
+For many years most scientists have agreed that the group consists of five taxa
+that belong to the genus *Sylvia* and where two taxa are considered proper
+species and the other three taxa are considered subspecies. 
+
+In 2013 Lars Svensson proposed a taxonomic revision of the group into three
+distinct species. This revision is described in the paper *[A taxonomic revision
+of the Subalpine Warbler by Lars Svensson, 2013](http://boc-online.org/bulletins/downloads/BBOC1333-Svensson.pdf)*.
+The revision is based on genetic, morphological, geographic and behavioral
+characteristics of the taxa. The geographic distribution ranges of the taxa is
+presented in the paper and shown below.
+
+![Distribution ranges of the Subalpine warblers](subalpine-warblers-map.jpg)
+
+*Image taken from the paper by Lars Svensson*.
+
+The proposed revision has not been accepted by all scientists and taxonomic
+experts. There even exists different opinions on the genus to which the
+subalpine warblers belong.
+
 In the **[IOC World Bird List (v 7.3) by Gill, F & D Donsker (Eds)](http://www.worldbirdnames.org/ioc-lists/master-list-2/)**
-from 2017
-the group of subalpine warblers is classified into two species; *Sylvia
-cantillans* and *Sylvia subalpina*. *Sylvia Cantillans* has four subspecies;
-*cantillans*, *albistriata*, *iberiae* and *inornata* and *Sylvia subalpina*
-has no subspecies.
+from 2017 the group of subalpine warblers is classified into two species;
+*Sylvia cantillans* and *Sylvia subalpina*. *Sylvia Cantillans* has four
+subspecies; *cantillans*, *albistriata*, *iberiae* and *inornata* and *Sylvia
+subalpina* has no subspecies.
 
 However in **[The Howard & Moore Complete Checklist of the Birds of the World.
 4th. Edition by Dickinson, E.C., J.V. Remsen Jr. & L. Christidis (Eds)](https://www.nhbs.com/series/the-howard-and-moore-complete-checklist-of-the-birds-of-the-world)**
-from
-2013-2014 this group is classified into three species; *Curruca cantillans*,
-*Curruca inornata* and *Curucca subalpina*. *Curruca cantillans* has three
-subspecies; *cantillans*, *albistriata* and *iberiae*. *Curruca inornata* has
-one subspecies *inornata* and *Curruca subalpina* has no subspecies.
+from 2013-2014 this group is classified into three species, but belong to a 
+different genus *Curruca*. The species being *Curruca cantillans*, *Curruca
+inornata* and *Curucca subalpina*. *Curruca cantillans* has three subspecies;
+*cantillans*, *albistriata* and *iberiae*. *Curruca inornata* has one subspecies
+*inornata* and *Curruca subalpina* has no subspecies.
 
 And finally, in the **[Bird List of the Taxonomic Committee of Birdlife Sweden](http://birdlife.se/tk/svenska-namn-pa-varldens-faglar/)**
 from 2017 this group is classified into three species; *Sylvia cantillans*,
@@ -83,21 +102,11 @@ from 2017 this group is classified into three species; *Sylvia cantillans*,
 subspecies; *cantillans* and *albistriata* and *Sylvia inornata* has two
 subspecies *inornata* and *iberiae*.
 
-The scientific paper originally proposing the taxonomic revision of this group
-resulting in three different species and revisions of the names is *[A taxonomic
-revision of the Subalpine Warbler by Lars Svensson, 2013](http://boc-online.org/bulletins/downloads/BBOC1333-Svensson.pdf)*
-is largely based on geographic and behavioral characteristcs. In the paper the
-geographic distribution ranges of the species is presented (see below).
-
-![Distribution ranges of the Subalpine warblers](subalpine-warblers-map.jpg)
-
-*Image taken from the paper by Lars Svensson*.
-
 In this case of the classification of subalpine warblers, we see differences in
 both taxonomies and in naming of taxa, due to differing opinions on how to
 classify these birds.
 
-This problem is made even more complicated by the fact that most species, and
+The problem is made even more complicated by the fact that most species, and
 in some cases also subspecies, have names in natural languages, like english
 and swedish, and these names are also subject to changes. These names are
 usually tied more to the species concept than the scientific name! For example
@@ -137,14 +146,16 @@ systems for amateurs to reporting sightings, which then can be used by scientist
 and in environmental research in order to identify possible changes in population
 trends for different species. These software systems are important tools in
 enabling what is today called **[crowd science or citizen science](https://en.wikipedia.org/wiki/Citizen_science)**.
+It is more important than ever, to be able to know what species and subspeciesi
+we are talking about!
 
-## The mathematical structure of taxonomies
-
-### Trees and graphs
+## Taxonomies as information structures
 
 A taxonomy can be represented as a *tree*. Relationships between taxa in
 different taxonomies can be represented by *directed graphs* between related
 taxa.
+
+### Trees and graphs
 
 A *tree* **T** is a finite set of one or more *nodes* such that (recursively):
 
@@ -192,23 +203,22 @@ two other attributes to each taxon, as follows.
 
 There are many ways to represent trees and graphs in different programming
 languages and data formats. There are even many different ways to represent trees
-and graphs in any give programming language or data format. Which representation
+and graphs in any given programming language or data format. Which representation
 we choose should be guided by two basic considerations; ease of comprehension
 and suitability for the most important operations we may wish to perform on the
 taxonomies.
 
-Here I will use JSON which is a simple and widely used data format that supports
-representing hierarchical structures as well as sets. I will first present the
-data structure by example instead of by specification. In the examples I will
-use the taxonomic group of subalpine warblers as classified by the Swedish
-Taxonomic Committee previuosly discussed.
+Here I will use [JSON](http://json.org) which is a simple and widely used data
+format that supports representing hierarchical structures as well as sets. I
+will first present the data structure by example instead of by specification.i
+In the examples I will use the taxonomic group of subalpine warblers as
+classified by the Swedish Taxonomic Committee previuosly discussed.
 
 This is a JSON representation of *Sylvia cantillans*:
 ```JSON
 {
  "name": "Sylvia cantillans",
- "author": "Pallas",
- "date": "1764",
+ "auctor": "(Pallas, 1764)",
  "rank": "Species",
  "concept": {
              "reference": {
@@ -234,7 +244,3 @@ This is a JSON representation of *Sylvia cantillans*:
 }
 ```
 
-We are here being a bit fuzzy regarding the attributes "concept" and
-"type\_specimen".
-
-###
