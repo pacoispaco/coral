@@ -56,7 +56,7 @@ same concept**.
 
 To illustrate the complexity and constantly evolving character of taxonomy, as
 well as the differing opinions on names, we will look at a group of warblers
-informally grouped under the name, **subalpine warblers**.
+informally grouped under the name **subalpine warblers**.
 
 ![Subalpine warblers](subalppainting-annotated.jpg)
 *Image taken from [this article on identifying subalpine warblers in the field
@@ -64,7 +64,7 @@ by Brian J. Small](http://surfbirds.com/Features/subalpine13/main.html)*.
 
 For many years most scientists have agreed that the group consists of five taxa
 that belong to the genus *Sylvia* and where two taxa are considered proper
-species and the other three taxa are considered subspecies. 
+species and the other three taxa are considered subspecies.
 
 In 2013 Lars Svensson proposed a taxonomic revision of the group into three
 distinct species. This revision is described in the paper *[A taxonomic revision
@@ -78,8 +78,8 @@ presented in the paper and shown below.
 *Image taken from the paper by Lars Svensson*.
 
 The proposed revision has not been accepted by all scientists and taxonomic
-experts. There even exists different opinions on the genus to which the
-subalpine warblers belong.
+experts. There even exists different opinions on the name of the genus to which
+the subalpine warblers belong.
 
 In the **[IOC World Bird List (v 7.3) by Gill, F & D Donsker (Eds)](http://www.worldbirdnames.org/ioc-lists/master-list-2/)**
 from 2017 the group of subalpine warblers is classified into two species;
@@ -89,7 +89,7 @@ subalpina* has no subspecies.
 
 However in **[The Howard & Moore Complete Checklist of the Birds of the World.
 4th. Edition by Dickinson, E.C., J.V. Remsen Jr. & L. Christidis (Eds)](https://www.nhbs.com/series/the-howard-and-moore-complete-checklist-of-the-birds-of-the-world)**
-from 2013-2014 this group is classified into three species, but belong to a 
+from 2013-2014 this group is classified into three species, but belong to a
 different genus *Curruca*. The species being *Curruca cantillans*, *Curruca
 inornata* and *Curucca subalpina*. *Curruca cantillans* has three subspecies;
 *cantillans*, *albistriata* and *iberiae*. *Curruca inornata* has one subspecies
@@ -106,7 +106,7 @@ both taxonomies and in naming of taxa, due to differing opinions on how to
 classify these birds.
 
 The problem is made even more complicated by the fact that most species, and
-in some cases also subspecies, have names in natural languages, like english
+in some cases also subspecies, have common names in many languages, like english
 and swedish, and these names are also subject to changes. These names are
 usually tied more to the species concept than the scientific name! For example
 the official name in Swedish for *Sylvia Subalpina* is **Moltonisångare**. If
@@ -136,8 +136,9 @@ organisms. The purpose of names is still to be able to communicate and uniquely
 identify organisms, but names should also convey the evolutionary position of
 taxa in the great and continously ongoing process of evolution.
 
-For birders keeping track of which birds they've seen they need to decide which
-taxonomy, or list, they should use as the base for their personal lists.
+For amateur naturalists, like birders, keeping track of which birds they've
+seen they need to decide which taxonomy, or list, they should use as the base
+for their personal lists.
 
 These two purpuses, that of the scientific community and that of amateur
 naturalists, have started to overlapse with the advent of software and online
@@ -145,8 +146,8 @@ systems for amateurs to reporting sightings, which then can be used by scientist
 and in environmental research in order to identify possible changes in population
 trends for different species. These software systems are important tools in
 enabling what is today called **[crowd science or citizen science](https://en.wikipedia.org/wiki/Citizen_science)**.
-It is more important than ever, to be able to know what species and subspeciesi
-we are talking about!
+It is today more important than ever, to be able to know what species and
+subspecies we are talking about!
 
 ## Taxonomies as information structures
 
@@ -173,8 +174,8 @@ would like to assign a few attributes to each taxon as follows.
 
  1. every taxon is assigned a *taxonomic rank*.
  1. every taxon is assigned a *taxonomic name*, *author* and publication date
-    in accordance with the ICZN or ICN rules and which is unique within the set
-    of taxa with the same rank.
+    in accordance with the ICZN or ICN rules and which is unique within the
+    taxonomy.
  1. every taxon is assigned a *taxonomic concept*.
  1. every taxon that has the rank of *Species* or *Subspecies* is assigned a
     set of *type specimens*.
@@ -209,23 +210,29 @@ taxonomies.
 
 Here I will use [JSON](http://json.org) which is a simple and widely used data
 format that supports representing hierarchical structures as well as sets. I
-will first present the data structure by example instead of by specification.i
+will first present the data structure by example instead of by specification.
 In the examples I will use the taxonomic group of subalpine warblers as
-classified by the Swedish Taxonomic Committee previuosly discussed.
+classified by the Swedish Taxonomic Committee previously discussed.
 
-This is a JSON representation of *Sylvia cantillans*:
+This is a possible JSON representation of *Sylvia cantillans* based on its
+classification in the **[Bird List of the Taxonomic Committee of Birdlife Sweden](http://birdlife.se/tk/svenska-namn-pa-varldens-faglar/)**
+and complemented with some additional information:
+
 ```JSON
 {
  "name": "Sylvia cantillans",
- "auctor": "(Pallas, 1764)",
+ "author": "(Pallas, 1764)",
  "rank": "Species",
- "concept": {
-             "reference": {
-                           "title": "A taxonomic revision of the Subalpine Warbler by Lars Svensson, 2013",
-                           "url": "http://boc-online.org/bulletins/downloads/BBOC1333-Svensson.pdf"
-                          }
-            },
- "type_specimens": [],
+ "concept_references": [{
+                         "title": "A taxonomic revision of the Subalpine Warbler by Lars Svensson, 2013",
+                         "url": "http://boc-online.org/bulletins/downloads/BBOC1333-Svensson.pdf"
+                        }]
+ "type_specimens": [{
+                     "sort": "neotype",
+                     "description": "First-summer male collected on 23 May 1906 at Ficuzza, north-west Sicily",
+                     "location": "Natural History Museum, Tring, BMNH 1909.11.18.50",
+                     "url": None
+                    }],
  "supertaxon": "Sylvia",
  "subtaxa": ["Sylvia cantillans cantillans", "Sylvia cantillans albistriata"],
  "homonyms": [{
@@ -236,10 +243,28 @@ This is a JSON representation of *Sylvia cantillans*:
                "taxonomy": "HM 4th ed",
                "name": "Curruca cantillans"
               }],
- "names": {
-           "en_GB": ["Subalpine warbler"],
-           "sv_SE": ["Rödstrupig sångare"]
-          }
+ "common_names": {
+                  "en_GB": ["Subalpine warbler"],
+                  "sv_SE": ["Rödstrupig sångare"]
+                 }
 }
+```
+
+It could be argued that the information on common names should be moved to a
+separate data structure where common names would be indexed by scientific name
+for fast lookup.
+
+The above JSON data representation could be stored as a separate file with the
+same name as the taxon; "sylvia\_cantillans.json". Doing the same with the other
+taxa in this taxonomy we would have the following JSON files:
+
+```bash
+sylvia_cantillans.json
+sylvia_cantillans_cantillans.json
+sylvia_cantillans_albistriata.json
+sylvia_inornata.json
+sylvia_inornata_inornata.json
+sylvia_inornata_iberiae.json
+sylvia_subalpina.json
 ```
 
