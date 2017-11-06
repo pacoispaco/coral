@@ -26,10 +26,9 @@ the typical species of that genus. Genus are then categorised into **familes**
 and they in turn, are grouped into higher and higher **ranks** of taxa.
 
 Each taxon, including genus, species and subspecies are defined by a **concept**
-consisting of a description and the characteristics that differentiate it from
-other taxa. By concept we mean here the actual description of the taxa and the
-so called **diagnosis** of the taxa; what are its unique characters and what
-makes it distinct with regard to other closely taxa.  
+consisting of a **description** of the taxa and its characters as well as a
+ **diagnosis** which describes the unique characters that differentiate it from
+other closely related taxa.
 
 The naming of taxa is based on rules defined by the [ICZN (International
 Commission on Zoological Nomenclature)](http://iczn.org) and the [ICN
