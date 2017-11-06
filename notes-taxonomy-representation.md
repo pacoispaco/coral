@@ -226,12 +226,12 @@ and complemented with some additional information:
  "concept_references": [{
                          "title": "A taxonomic revision of the Subalpine Warbler by Lars Svensson, 2013",
                          "url": "http://boc-online.org/bulletins/downloads/BBOC1333-Svensson.pdf"
-                        }]
+                        }],
  "type_specimens": [{
                      "sort": "neotype",
                      "description": "First-summer male collected on 23 May 1906 at Ficuzza, north-west Sicily",
                      "location": "Natural History Museum, Tring, BMNH 1909.11.18.50",
-                     "url": None
+                     "url": null
                     }],
  "supertaxon": "Sylvia",
  "subtaxa": ["Sylvia cantillans cantillans", "Sylvia cantillans albistriata"],
