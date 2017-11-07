@@ -227,9 +227,23 @@ and complemented with some additional information:
 
 ```JSON
 {
- "name": "Sylvia cantillans",
- "author": "(Pallas, 1764)",
+ "binomial_name": "Sylvia cantillans",
+ "name": "cantillans"
+ "authority": "(Pallas, 1764)",
  "rank": "Species",
+ "taxonomy: "IOC 7.3",
+ "extra": {
+           "code": null
+          },
+ "comment": null,
+ "distribution": {
+                  "breeding": "EU",
+                  "breeding_subrange": "sw",
+                  "non_breeding": "n AF",
+                  "spring_migration": null,
+                  "autumn_migration": null,
+                  "extinct": False
+                 },
  "concept_references": [{
                          "title": "A taxonomic revision of the Subalpine Warbler by Lars Svensson, 2013",
                          "url": "http://boc-online.org/bulletins/downloads/BBOC1333-Svensson.pdf"
@@ -251,8 +265,8 @@ and complemented with some additional information:
                "name": "Curruca cantillans"
               }],
  "common_names": {
-                  "en_GB": ["Subalpine warbler"],
-                  "sv_SE": ["Rödstrupig sångare"]
+                  "en_ioc": "Subalpine warbler",
+                  "sv_ioc": "Rödstrupig sångare"
                  }
 }
 ```
