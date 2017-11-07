@@ -21,7 +21,7 @@ storage at biological institutions so that other scientists can examine them if
 the need for reclassification should arise.
 
 Species are then grouped into taxa called **genus** and one of the species in
-each genus is designated the **type species**, which ican be said to indicate
+each genus is designated the **type species**, which can be said to indicate
 the typical species of that genus. Genus are then categorised into **familes**
 and they in turn, are grouped into higher and higher **ranks** of taxa.
 
@@ -63,8 +63,8 @@ informally grouped under the name **subalpine warblers**.
 by Brian J. Small](http://surfbirds.com/Features/subalpine13/main.html)*.
 
 For many years most scientists have agreed that the group consists of five taxa
-that belong to the genus *Sylvia* and where two taxa are considered proper
-species and the other three taxa are considered subspecies.
+that belong to the genus *Sylvia*, where two taxa are considered proper species
+and the other three taxa are considered subspecies.
 
 In 2013 Lars Svensson proposed a taxonomic revision of the group into three
 distinct species. This revision is described in the paper *[A taxonomic revision
@@ -78,7 +78,7 @@ presented in the paper and shown below.
 *Image taken from the paper by Lars Svensson*.
 
 The proposed revision has not been accepted by all scientists and taxonomic
-experts. There even exists different opinions on the name of the genus to which
+experts. There even exist different opinions on the name of the genus to which
 the subalpine warblers belong.
 
 In the **[IOC World Bird List (v 7.3) by Gill, F & D Donsker (Eds)](http://www.worldbirdnames.org/ioc-lists/master-list-2/)**
@@ -130,15 +130,14 @@ all living organisms, partly as a celebration of gods creation and partly in
 order for biologists to be able to communicate about animals and plants in a
 unambigous way. With the breakthrough of the discovery of evolution and the
 desire to understand evolutionary processes and mechanisms, there was a big
-shift from the idea of taxonomies simply beeing a classification to bring order
+shift from the idea of taxonomies simply beeing a classification to bring order,
 to an idea of using taxonomies to also describe the evolutionary history of
 organisms. The purpose of names is still to be able to communicate and uniquely
 identify organisms, but names should also convey the evolutionary position of
 taxa in the great and continously ongoing process of evolution.
 
-For amateur naturalists, like birders, keeping track of which birds they've
-seen they need to decide which taxonomy, or list, they should use as the base
-for their personal lists.
+Amateur naturalists, like birders, want to know which names to use when reporting
+and keeping track of what they've seen and observed.
 
 These two purpuses, that of the scientific community and that of amateur
 naturalists, have started to overlapse with the advent of software and online
@@ -288,4 +287,4 @@ RAM for fast access.
 For taxonomies and taxa lists for birds the most common data formats are Excel,
 CSV and XML. Reading and parsing these formats in order to construct a data
 representation of them as described above presents a number of challenges due
-to implicit assumptions made in many of the available data sources. 
+to implicit assumptions made in many of the available data sources.
