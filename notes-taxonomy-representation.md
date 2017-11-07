@@ -228,10 +228,10 @@ and complemented with some additional information:
 ```JSON
 {
  "binomial_name": "Sylvia cantillans",
- "name": "cantillans"
+ "name": "cantillans",
  "authority": "(Pallas, 1764)",
  "rank": "Species",
- "taxonomy: "IOC 7.3",
+ "taxonomy": "IOC 7.3",
  "extra": {
            "code": null
           },
@@ -242,7 +242,7 @@ and complemented with some additional information:
                   "non_breeding": "n AF",
                   "spring_migration": null,
                   "autumn_migration": null,
-                  "extinct": False
+                  "extinct": false
                  },
  "concept_references": [{
                          "title": "A taxonomic revision of the Subalpine Warbler by Lars Svensson, 2013",
