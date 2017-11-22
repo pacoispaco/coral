@@ -216,7 +216,7 @@ The most important operations we are considering here are:
  * Fast access to synonyms and homonyms of a given taxon.
 
 Here I will use [JSON](http://json.org) which is a simple and widely used data
-format that supports representing hierarchical structures as well as sets. I
+format that supports representing hierarchical structures as well as lists. I
 will first present the data structure by example instead of by specification.
 In the examples I will use the taxonomic group of subalpine warblers as
 classified by the Swedish Taxonomic Committee previously discussed.
@@ -231,19 +231,9 @@ and complemented with some additional information:
  "name": "cantillans",
  "authority": "(Pallas, 1764)",
  "rank": "Species",
- "taxonomy": "IOC 7.3",
- "extra": {
-           "code": null
-          },
- "comment": null,
- "distribution": {
-                  "breeding": "EU",
-                  "breeding_subrange": "sw",
-                  "non_breeding": "n AF",
-                  "spring_migration": null,
-                  "autumn_migration": null,
-                  "extinct": false
-                 },
+ "taxonomy": "TC BS v6",
+ "extra": {},
+ "distribution": {},
  "concept_references": [{
                          "title": "A taxonomic revision of the Subalpine Warbler by Lars Svensson, 2013",
                          "url": "http://boc-online.org/bulletins/downloads/BBOC1333-Svensson.pdf"
@@ -257,16 +247,13 @@ and complemented with some additional information:
  "supertaxon": "Sylvia",
  "subtaxa": ["Sylvia cantillans cantillans", "Sylvia cantillans albistriata"],
  "homonyms": [{
-               "taxonomy": "IOC v7.3",
+               "taxonomy": "IOC 7.3",
                "name": "Sylvia cantillans"
               }],
- "synonyms": [{
-               "taxonomy": "HM 4th ed",
-               "name": "Curruca cantillans"
-              }],
+ "synonyms": [],
  "common_names": {
-                  "en_ioc": "Subalpine warbler",
-                  "sv_ioc": "Rödstrupig sångare"
+                  "en": "Subalpine warbler",
+                  "sv": "Rödstrupig sångare"
                  }
 }
 ```
@@ -287,6 +274,49 @@ sylvia_inornata.json
 sylvia_inornata_inornata.json
 sylvia_inornata_iberiae.json
 sylvia_subalpina.json
+```
+
+This is a possible JSON representation of *Sylvia cantillans* based on its
+classification in the **[IOC World Bird List (v 7.3) by Gill, F & D Donsker (Eds)](http://www.worldbirdnames.org/ioc-lists/master-list-2/)**
+and complemented with some additional information:
+
+
+```JSON
+{
+ "binomial_name": "Sylvia cantillans",
+ "name": "cantillans",
+ "authority": "(Pallas, 1764)",
+ "rank": "Species",
+ "taxonomy": "IOC 7.3",
+ "extra": {
+           "comment": null,
+           "code": null
+          },
+ "distribution": {
+                  "breeding": "EU",
+                  "breeding_subrange": "sw",
+                  "non_breeding": "n AF",
+                  "spring_migration": null,
+                  "autumn_migration": null,
+                  "extinct": false
+                 },
+ "concept_references": [],
+ "type_specimens": [],
+ "supertaxon": "Sylvia",
+ "subtaxa": ["Sylvia cantillans cantillans", "Sylvia cantillans albistriata"],
+ "homonyms": [{
+               "taxonomy": "TC BS v6",
+               "name": "Sylvia cantillans"
+              }],
+ "synonyms": [{
+               "taxonomy": "HM 4th ed",
+               "name": "Curruca cantillans"
+              }],
+ "common_names": {
+                  "en": "Subalpine warbler",
+                  "sv": "Rödstrupig sångare"
+                 }
+}
 ```
 
 These JSON files could then be indexed by scientific name as well as by common
