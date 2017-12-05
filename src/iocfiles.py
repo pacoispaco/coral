@@ -29,7 +29,8 @@ class MultipleVersionsOfIocFiles (Exception):
 
 def sorted_ioc_files (filepaths):
     """Returns a list of IOC File class instances sorted in the order they
-       should be processed."""
+       should be processed, based on the list of 'filepaths'."""
+    assert type (filepaths) == list
     result = []
     for path in filepaths:
         try:
@@ -55,7 +56,7 @@ def sorted_ioc_files (filepaths):
         raise MultipleIocFilesOfSameType (filepaths)
     # Make sure all IOC files have the same version
     versions = [file.version for file in result]
-    if not len (set (versions)) == 1:
+    if not len (set (versions)) <= 1:
         print ("Error: Multiple versions of IOC files.")
         raise MultipleVersionsOfIocFiles (filepaths)
     # Return the list of IOC files sorted by their 'order' attribute
@@ -73,6 +74,7 @@ class IocMasterFile (object):
         self.taxonomy = []        # This list contains the list of top level
                                   # taxa. Each taxa has a 'subtaxa' attribute
                                   # which is a list of taxa, etc.
+        self.index = {}           # This index contains all taxa keyed by name
         self.taxonomy_stats = {}
         if self.workbook.worksheets[0].title == "Master":
             s = self.workbook.worksheets[0].cell (row=1, column=2).value
@@ -85,8 +87,6 @@ class IocMasterFile (object):
     def read (self):
         """Read the taxonomy data into the attribute 'self.taxonomy' and
            save statistics in the attribute 'self.taxonomy_stats'."""
-        # Note that the global variable 'master_taxonomy' is a list that will maintain the
-        # ordering of taxa in the IOC Master file.
         self.taxonomy_stats = {'infraclass_count': 0,
                                'order_count': 0,
                                'family_count': 0,
@@ -102,9 +102,10 @@ class IocMasterFile (object):
             genus = row[4].value
             species = row[5].value
             subspecies = row[6].value
-            taxon = {'listnames': ['ioc'],
+            taxon = {'other_classifications': [], # Taxa in other lists which
+                                                  # are equivalent to this taxon
                      'authority': row[7].value,
-                     'names': {'en': {'ioc': row[8].value}},
+                     'common_names': {'en': row[8].value},
                      'breeding_range': row[9].value,
                      'breeding_subranges': row[10].value,
                      'nonbreeding_range': row[11].value,
@@ -115,32 +116,39 @@ class IocMasterFile (object):
                 taxon['rank'] = "Infraclass"
                 taxon['name'] = infraclass
                 self.taxonomy.append (taxon)
+                self.index[infraclass] = taxon
                 self.taxonomy_stats['infraclass_count'] += 1
             elif order:
                 taxon['rank'] = "Order"
                 taxon['name'] = order
                 taxon['supertaxon'] = self.taxonomy[-1]['name']
                 self.taxonomy[-1]['subtaxa'].append (taxon)
+                self.index[order] = taxon
                 self.taxonomy_stats['order_count'] += 1
             elif family:
                 taxon['rank'] = "Family"
                 taxon['name'] = family
                 taxon['supertaxon'] = self.taxonomy[-1]['subtaxa'][-1]['name']
                 self.taxonomy[-1]['subtaxa'][-1]['subtaxa'].append (taxon)
+                self.index[family] = taxon
                 self.taxonomy_stats['family_count'] += 1
             elif genus:
                 taxon['rank'] = "Genus"
-                taxon['name'] = genus.title ()
+                # Strip trailing "extinct" characters '\u2020' and whitespace
+                taxon['name'] = genus.title ().strip ('\u2020').strip ()
                 taxon['supertaxon'] = self.taxonomy[-1]['subtaxa'][-1]['subtaxa'][-1]['name']
                 self.taxonomy[-1]['subtaxa'][-1]['subtaxa'][-1]['subtaxa'].append (taxon)
+                self.index[genus] = taxon
                 self.taxonomy_stats['genus_count'] += 1
             elif species:
                 taxon['rank'] = "Species"
                 taxon['name'] = species
                 taxon['supertaxon'] = self.taxonomy[-1]['subtaxa'][-1]['subtaxa'][-1]['subtaxa'][-1]['name']
                 genus = taxon['supertaxon']
-                taxon['binomial_name'] = genus + " " + species
+                # Strip trailing "extinct" characters '\u2020' and whitespace
+                taxon['binomial_name'] = (genus + " " + species).strip ('\u2020').strip ()
                 self.taxonomy[-1]['subtaxa'][-1]['subtaxa'][-1]['subtaxa'][-1]['subtaxa'].append (taxon)
+                self.index[taxon['binomial_name']] = taxon
                 self.taxonomy_stats['species_count'] += 1
             elif subspecies:
                 taxon['rank'] = "Subspecies"
@@ -148,8 +156,12 @@ class IocMasterFile (object):
                 taxon['supertaxon'] = self.taxonomy[-1]['subtaxa'][-1]['subtaxa'][-1]['subtaxa'][-1]['subtaxa'][-1]['name']
                 genus = self.taxonomy[-1]['subtaxa'][-1]['subtaxa'][-1]['subtaxa'][-1]['name']
                 species = taxon['supertaxon']
-                taxon['trinomial_name'] = genus + " " + species + " " + subspecies
+                # Strip trailing "extinct" characters '\u2020' and whitespace
+                trinomial_name = (genus + " " + species + " " + subspecies).strip ('\u2020').strip ()
+                # Strip "extinct" characters '\u2020' in trinomial name
+                taxon['trinomial_name'] = trinomial_name.replace (" \u2020", "")
                 self.taxonomy[-1]['subtaxa'][-1]['subtaxa'][-1]['subtaxa'][-1]['subtaxa'][-1]['subtaxa'].append (taxon)
+                self.index[taxon['trinomial_name']] = taxon
                 self.taxonomy_stats['subspecies_count'] += 1
 
 class IocOtherListsFile (object):
@@ -161,9 +173,11 @@ class IocOtherListsFile (object):
         self.workbook = workbook
         self.path = path
         self.version = None
-        self.taxonomy = {}          # This object contains taxa indexed by their
-                                    # name (or binomial or trinomial name if
-                                    # applicable (for species and subspecies)
+        self.index = {}          # This object contains taxa indexed by their
+                                 # IOC name (or binomial or trinomial name if
+                                 # applicable (for species and subspecies)
+        self.nonindexed = []     # List of all taxa that do not exist in IOC
+                                 # but do exist in other lists
         self.taxonomy_stats = {}
         self.lists = {'ioc_7_3': 'Gill, F & D Donsker (Eds). 2017. IOC World Bird List (v 7.3)',
                       'clements_2016': 'Clements, J. F., T. S. Schulenberg, M. J. Iliff, D. Roberson, T. A. Fredericks, B. L. Sullivan, and C. L. Wood. 2016. The eBird/Clements checklist of birds of the world: v2016.',
@@ -199,46 +213,49 @@ class IocOtherListsFile (object):
         ws = self.workbook.worksheets[0]
         for row in ws.iter_rows (min_row=2):
             name = row[1].value
-            self.taxonomy[name] = {'seq_no': row[0].value,
-                                   'name': name,
-                                   'notes': row[2].value,
-                                   'iucn_red_list_category': row[27].value,
-                                   'lists': {'clements_2016': {'name': row[4].value,
-                                                               'group': row[3].value,
-                                                               'family': row[17].value},
-                                             'hbwbl_2016': {'name': row[5].value,
-                                                            'group': row[6].value,
-                                                            'family': row[18].value},
-                                             'hm4_4ed': {'name': row[8].value,
-                                                         'group': row[7].value,
-                                                         'family': row[19].value},
-                                             'hbw_2013': {'name': row[9].value,
-                                                          'group': None,
-                                                          'family': row[20].value},
-                                             'peters_1986': {'name': row[10].value,
-                                                             'group': None,
-                                                             'family': row[21].value},
-                                             'boyd': {'name': row[11].value,
-                                                      'group': None,
-                                                      'family': row[22].value},
-                                             'hbwbl_2017': {'name': row[12].value,
-                                                            'group': None,
-                                                            'family': row[23].value},
-                                             'sibley_1993': {'name': row[13].value,
-                                                             'group': None,
-                                                             'family': row[24].value},
-                                             'ioc_7_2': {'name': None,
-                                                         'group': None,
-                                                         'family': row[25].value},
-                                             'ioc_7_1': {'name': None,
-                                                         'group': None,
-                                                         'family': row[26].value}}}
+            entry = {'seq_no': row[0].value,
+                     'name': name,
+                     'rank': row[2].value,
+                     'notes': row[3].value,
+                     'iucn_red_list_category': row[32].value,
+                     'lists': {'clements_2016': {'name': row[5].value,
+                                                 'group': row[4].value,
+                                                 'family': row[18].value},
+                               'hbwbl_2016': {'name': row[7].value,
+                                              'group': row[6].value,
+                                              'family': row[19].value},
+                               'hm4_4ed': {'name': row[9].value,
+                                           'group': row[8].value,
+                                           'family': row[20].value},
+                               'hbw_2013': {'name': row[10].value,
+                                            'group': None,
+                                            'family': row[21].value},
+                               'peters_1986': {'name': row[11].value,
+                                               'group': None,
+                                               'family': row[22].value},
+                               'boyd': {'name': row[12].value,
+                                        'group': None,
+                                        'family': row[23].value},
+                               'hbwbl_2017': {'name': row[13].value,
+                                              'group': None,
+                                              'family': row[24].value},
+                               'sibley_1993': {'name': row[14].value,
+                                               'group': None,
+                                               'family': row[25].value},
+                               'ioc_7_2': {'name': row[15].value,
+                                           'group': None,
+                                           'family': row[26].value},
+                               'ioc_7_1': {'name': row[16].value,
+                                           'group': None,
+                                           'family': row[27].value}}}
             if name:
+                self.index[name] = entry
                 if len (name.split ()) == 2:
                     self.taxonomy_stats['species_count'] += 1
                 else:
                     self.taxonomy_stats['subspecies_count'] += 1
             else:
+                self.nonindexed.append(entry)
                 self.taxonomy_stats['only_in_other_lists_count'] += 1
 
 class IocMultilingualFile (object):
@@ -280,8 +297,7 @@ class IocMultilingualFile (object):
                 name = row[3].value
                 self.taxonomy_stats['species_count'] += 1
                 i = 1
-                entry = {'name': name,
-                         'cat': row[6].value,
+                entry = {'cat': row[6].value,
                          'cze': row[9].value,
                          'est': row[12].value,
                          'ger': row[15].value,
@@ -369,14 +385,16 @@ class IocComplementaryFile (object):
                                        'comment': row[11].value}
             elif row[2].value == "Genus":
                 name = row[6].value
-                self.taxonomy[name] = {'name': name,
+                self.taxonomy[name] = {'extinct': row[3].value,
+                                       'name': name,
                                        'rank': 'Genus',
                                        'authority': row[7].value,
                                        'code': row[10].value,
                                        'comment': row[11].value}
             elif row[2].value == "Species":
                 name = row[6].value
-                self.taxonomy[name] = {'name': name,
+                self.taxonomy[name] = {'extinct': row[3].value,
+                                       'name': name,
                                        'rank': 'Species',
                                        'name_eng': row[4].value,
                                        'authority': row[7].value,

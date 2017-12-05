@@ -21,6 +21,7 @@ ERROR_NO_MASTER_DATA = 4
 
 # Directory and file name constants
 DEFAULT_IOC_DIR = "./data-ioc"
+DEFAULT_IOC_TAXONOMY_DIR = "ioc"
 VERSION_FILE_NAME = "version.json"
 
 class IocWbl (object):
@@ -61,21 +62,22 @@ def write_taxon_to_file (directory, taxon):
     f.write (json.dumps (taxon))
     f.close ()
 
-def write_master_taxonomy_to_files (iocwbl, verbose):
+def write_taxonomy_to_files (iocwbl, verbose):
     """Write JSON representations of the taxa in the master taxonomy to files."""
+    p = os.path.join (DEFAULT_IOC_DIR, DEFAULT_IOC_TAXONOMY_DIR)
     if verbose:
         print ("Writing to files ...")
-    if os.path.exists (DEFAULT_IOC_DIR):
-        print ("Error: Directory '%s' already exists." % (DEFAULT_IOC_DIR))
+    if os.path.exists (p):
+        print ("Error: Directory '%s' already exists." % (p))
         sys.exit (ERROR_DATA_DIR_EXISTS_ALREADY)
     else:
-        os.makedirs(DEFAULT_IOC_DIR)
-    f = open (os.path.join (DEFAULT_IOC_DIR, VERSION_FILE_NAME), 'w')
+        os.makedirs (p)
+    f = open (os.path.join (p, VERSION_FILE_NAME), 'w')
     v = {"version": iocwbl.version}
     f.write (json.dumps (v))
     f.close ()
     for taxon in iocwbl.taxonomy:
-        write_taxon_to_file (DEFAULT_IOC_DIR, taxon)
+        write_taxon_to_file (p, taxon)
 
 def load_ioc_subtaxa (iocwbl, taxon, ioc_dir):
     """Load the subtaxa for the given taxon."""
@@ -101,7 +103,8 @@ def load_ioc_subtaxa (iocwbl, taxon, ioc_dir):
 def load_ioc_taxonomy (iocwbl, ioc_dir, verbose):
     """Load IOC taxonomy from files."""
     # Read version
-    f = open (os.path.join (DEFAULT_IOC_DIR, VERSION_FILE_NAME))
+    p = os.path.join (DEFAULT_IOC_DIR, DEFAULT_IOC_TAXONOMY_DIR)
+    f = open (os.path.join (p, VERSION_FILE_NAME))
     iocwbl.version = json.load (f)["version"]
     f.close ()
     # Read infraclasses:
@@ -115,6 +118,30 @@ def load_ioc_taxonomy (iocwbl, ioc_dir, verbose):
         iocwbl.taxonomy.append (taxon)
         load_ioc_subtaxa (iocwbl, taxon, ioc_dir)
         iocwbl.stats['infraclass_count'] += 1
+
+def add_taxonomies (iocwbl, iocplf):
+    """Add other taxonomies based on the IOC Other Lists File 'iocolf'."""
+    # TBD! We probably need to store the data we read from the iocwlb
+    # as a list of "lines"/"entries" each containing information on a taxa,
+    # maybe complementing it with an index of taxon names pointing to the
+    # corresponding "line"/"entry".
+
+def add_languages (iocwbl, iocmlf):
+    """Add languages from the IOC Multilingual file 'iocmlf' to the 'iocwbl'."""
+    for name in iter (iocwbl.index):
+        if name in iocmlf.taxonomy:
+            iocwbl.index[name]["common_names"].update (iocmlf.taxonomy[name])
+
+def add_complementary_info (iocwbl, ioccf):
+    """Add complementary information from the IOC Complementary file 'ioccf'."""
+    for name in iter (iocwbl.index):
+        if name in ioccf.taxonomy and iocwbl.index[name]["rank"] in ["Genus", "Species", "Subspecies"]:
+            iocwbl.index[name]["extinct"] = ioccf.taxonomy[name]["extinct"]
+            iocwbl.index[name]["code"] = ioccf.taxonomy[name]["code"]
+            if iocwbl.index[name]["comment"] != ioccf.taxonomy[name]["comment"]:
+                print (name)
+                print (" comment: '%s'" % (iocwbl.index[name]["comment"]))
+                print (" comment: '%s'" % (ioccf.index[name]["comment"]))
 
 def print_to_stdout (iocwbl, verbose):
     """Print JSON representations to stdout."""
@@ -145,38 +172,45 @@ def handle_files (filepaths, write, info, verbose):
        then print information on progress and what's happening."""
     iocwbl = IocWbl ()
     ioc_files = sorted_ioc_files (filepaths)
-    if verbose:
-        print ("IOC Version: %s" % (ioc_files[0].version))
+    ioc_dir = os.path.join (DEFAULT_IOC_DIR, DEFAULT_IOC_TAXONOMY_DIR)
     # First handle the IOC Master file or read existing data from JSON files
-    if type (ioc_files[0]) == IocMasterFile:
-        if verbose:
-            print ("Reading IOC Master File %s ..." % (ioc_files[0].path))
-        ioc_files[0].read ()
-        iocwbl.taxonomy = ioc_files[0].taxonomy
-        iocwbl.stats = ioc_files[0].taxonomy_stats
-    else:
+    if len (ioc_files) == 0 or not type (ioc_files[0]) == IocMasterFile:
         if not os.path.exists (ioc_dir):
             print ("Error: No master data in '%s' and no IOC Master File to read." % (ioc_dir))
             sys.exit (ERROR_NO_MASTER_DATA)
         elif verbose:
             print ("Loading existing master data from '%s' ..." % (ioc_dir))
         load_ioc_taxonomy (iocwbl, ioc_dir, verbose)
+        if verbose:
+            print ("IOC Version: %s" % (iocwbl.version))
+    elif type (ioc_files[0]) == IocMasterFile:
+        if verbose:
+            print ("Reading IOC Master File %s ..." % (ioc_files[0].path))
+            print ("IOC Version: %s" % (ioc_files[0].version))
+        ioc_files[0].read ()
+        iocwbl.taxonomy = ioc_files[0].taxonomy
+        iocwbl.index = ioc_files[0].index
+        iocwbl.stats = ioc_files[0].taxonomy_stats
+        iocwbl.version = ioc_files[0].version
     # Now read and handle the rest of the files in the correct order.
     for ioc_file in ioc_files[1:]:
         if type (ioc_file) == IocOtherListsFile:
             if verbose:
-                print ("Reading IOC Other Lists file '%s' ..." % (ioc_dir))
+                print ("Reading IOC Other Lists file '%s' ..." % (ioc_file))
             ioc_file.read ()
+            add_taxonomies (iocwbl, ioc_file)
         elif type (ioc_file) == IocMultilingualFile:
             if verbose:
-                print ("Reading IOC Multilingual file '%s' ..." % (ioc_dir))
+                print ("Reading IOC Multilingual file '%s' ..." % (ioc_file))
             ioc_file.read ()
+            add_languages (iocwbl, ioc_file)
         elif type (ioc_file) == IocComplementaryFile:
             if verbose:
-                print ("Reading IOC Complementary file '%s' ..." % (ioc_dir))
+                print ("Reading IOC Complementary file '%s' ..." % (ioc_file))
             ioc_file.read ()
+            add_complementary_info (iocwbl, ioc_file)
     if write:
-        write_master_taxonomy_to_files (iocwbl, verbose)
+        write_taxonomy_to_files (iocwbl, verbose)
     else:
         print_to_stdout (iocwbl, verbose)
     if info:
