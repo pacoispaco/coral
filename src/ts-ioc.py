@@ -119,7 +119,7 @@ def load_ioc_taxonomy (iocwbl, ioc_dir, verbose):
         load_ioc_subtaxa (iocwbl, taxon, ioc_dir)
         iocwbl.stats['infraclass_count'] += 1
 
-def add_taxonomies (iocwbl, iocplf):
+def add_taxonomies (iocwbl, iocolf):
     """Add other taxonomies based on the IOC Other Lists File 'iocolf'."""
     # TBD! We probably need to store the data we read from the iocwlb
     # as a list of "lines"/"entries" each containing information on a taxa,
@@ -138,10 +138,6 @@ def add_complementary_info (iocwbl, ioccf):
         if name in ioccf.taxonomy and iocwbl.index[name]["rank"] in ["Genus", "Species", "Subspecies"]:
             iocwbl.index[name]["extinct"] = ioccf.taxonomy[name]["extinct"]
             iocwbl.index[name]["code"] = ioccf.taxonomy[name]["code"]
-            if iocwbl.index[name]["comment"] != ioccf.taxonomy[name]["comment"]:
-                print (name)
-                print (" comment: '%s'" % (iocwbl.index[name]["comment"]))
-                print (" comment: '%s'" % (ioccf.index[name]["comment"]))
 
 def print_to_stdout (iocwbl, verbose):
     """Print JSON representations to stdout."""
