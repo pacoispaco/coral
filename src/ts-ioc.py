@@ -48,13 +48,12 @@ def write_taxon_to_file (directory, taxon):
         fname = taxon['trinomial_name'].replace (" ", "_") + ".json"
     else:
         fname = taxon['name'] + ".json"
-    # We save the filenames of the subtaxa in the attribute 'subtaxa'
     subtaxa_files = []
     for subtaxon in taxon['subtaxa']:
         if subtaxon['rank'] == "Species":
-            subtaxa_files.append (subtaxon['binomial_name'].replace (" ", "_") + ".json")
+            subtaxa_files.append (subtaxon['binomial_name'].replace (" ", "_"))
         elif subtaxon['rank'] == "Subspecies":
-            subtaxa_files.append (subtaxon['trinomial_name'].replace (" ", "_") + ".json")
+            subtaxa_files.append (subtaxon['trinomial_name'].replace (" ", "_"))
         else:
             subtaxa_files.append (subtaxon['name'] + ".json")
     taxon['subtaxa'] = subtaxa_files
