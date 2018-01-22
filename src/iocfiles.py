@@ -6,6 +6,9 @@ import os, os.path
 import openpyxl.reader.excel as xlxs
 import re
 
+# Constants: top taxa names in IOC
+TOP_TAXA_NAMES = ["NEOAVES", "NEOGNATHAE", "PALEOGNATHAE"]
+
 class InvalidIocMasterFile (Exception):
     pass
 
@@ -62,8 +65,9 @@ def sorted_ioc_files (filepaths):
     # Return the list of IOC files sorted by their 'order' attribute
     return sorted (result, key=lambda iocfile: iocfile.order)
 
+
 class IocMasterFile (object):
-    """Represents a IOC Master file."""
+    """Represents a IOC Master file (Excel)."""
 
     def __init__ (self, workbook, path):
         """Initialize with Excel 'workbook'."""
@@ -164,8 +168,9 @@ class IocMasterFile (object):
                 self.index[taxon['trinomial_name']] = taxon
                 self.taxonomy_stats['subspecies_count'] += 1
 
+
 class IocOtherListsFile (object):
-    """Represents a IOC Other Lists file."""
+    """Represents a IOC Other Lists file (Excel)."""
 
     def __init__ (self, workbook, path):
         """Initialize with the Excel 'workbook'."""
@@ -173,7 +178,7 @@ class IocOtherListsFile (object):
         self.workbook = workbook
         self.path = path
         self.version = None
-        self.index = {}          # This object contains taxa indexed by their
+        self.taxonomy = {}       # This object contains taxa indexed by their
                                  # IOC name (or binomial or trinomial name if
                                  # applicable (for species and subspecies)
         self.nonindexed = []     # List of all taxa that do not exist in IOC
@@ -218,6 +223,7 @@ class IocOtherListsFile (object):
                      'rank': row[2].value,
                      'notes': row[3].value,
                      'iucn_red_list_category': row[32].value,
+                     'following_entries': [],
                      'lists': {'clements_2016': {'name': row[5].value,
                                                  'group': row[4].value,
                                                  'family': row[18].value},
@@ -249,18 +255,21 @@ class IocOtherListsFile (object):
                                            'group': None,
                                            'family': row[27].value}}}
             if name:
-                self.index[name] = entry
+                self.taxonomy[name] = entry
                 if len (name.split ()) == 2:
                     self.taxonomy_stats['species_count'] += 1
                 else:
                     self.taxonomy_stats['subspecies_count'] += 1
+                latest_name = name
             else:
-                self.nonindexed.append(entry)
+                self.nonindexed.append (entry)
+                self.taxonomy[latest_name]['following_entries'].append (entry)
                 self.taxonomy_stats['only_in_other_lists_count'] += 1
 
+
 class IocMultilingualFile (object):
-    """Represents a IOC Multilingual file. Languages are encoded with ISO 639-2
-       codes."""
+    """Represents a IOC Multilingual file (Excel). Languages are encoded with ISO
+       639-2 codes (which are not used in the actual file)."""
 
     def __init__ (self, workbook, path):
         """Initialize with the Excel 'workbook'."""
@@ -329,8 +338,9 @@ class IocMultilingualFile (object):
                 entry['spa'] = row[29].value
                 self.taxonomy[name] = entry
 
+
 class IocComplementaryFile (object):
-    """Represents a IOC COmplementary file."""
+    """Represents a IOC Complementary file (Excel)."""
 
     def __init__ (self, workbook, path):
         """Initialize with the Excel 'workbook'."""
@@ -414,3 +424,55 @@ class IocComplementaryFile (object):
                                        'nonbreeding_range': row[9].value,
                                        'code': row[10].value,
                                        'comment': row[11].value}
+
+
+class IocData (object):
+    """Represents all IOC data and the entire IOC taxonomic hierarchy. The top
+       level taxa are available in the attribute 'top_taxa'. ALl other taxa can
+       be retrieved by name with the feature 'taxon'."""
+
+    def __init__ (self, directory):
+        """Initialize with the specified 'directory'."""
+        assert os.path.exists (directory)
+        assert os.path.isdir (directory)
+        self.directory = directory
+        self.top_taxa = self.__top_taxa__ ()
+
+    def __top_taxa__ (self):
+        """A list of the top IocTaxon in IOC. These IocTaxa have the rank
+           "Infraclass"."""
+        l = []
+        for name in TOP_TAXA_NAMES:
+            l.append (IocTaxon (name))
+        return l
+
+    def taxon (self, name):
+        """Return the IocTaxon with the given 'name'. Returns None if there is
+           no such IocTaxon."""
+        t = IocTaxon (name, self.directory)
+        if t.exists:
+            return t
+        else:
+            return None
+
+
+class IocTaxon (object):
+    """Represents an IOC taxon as transformed from the Excel data in the IOC
+       Master file, Complementary file, Multilingual file and Other Lists
+       file. All data for the taxon is available in the attribute 'data'."""
+
+    def __init__ (self, name, directory):
+        """Initialize with the name, that can be a binomial species or a
+           trinomial subspecies name."""
+        self.data = {'name': name}
+        self.filename = os.path.join (directory, name + '.json')
+        self.exists = os.path.exists (self.filename)
+        self.__load__ ()
+
+    def __load__ (self):
+        """Load from JSON file."""
+        if self.exists:
+            fname = self.data['name'] + '.json'
+            f = open (fname)
+            self.data = json.load (f)
+            f.close ()

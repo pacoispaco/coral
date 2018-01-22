@@ -124,6 +124,10 @@ def add_taxonomies (iocwbl, iocolf):
     # as a list of "lines"/"entries" each containing information on a taxa,
     # maybe complementing it with an index of taxon names pointing to the
     # corresponding "line"/"entry".
+    for name in iter (iocwbl.index):
+        if name in iocolf.taxonomy:
+            iocwbl.index[name]["following_entries"] = (iocolf.taxonomy[name]["following_entries"])
+            iocwbl.index[name]["lists"] = (iocolf.taxonomy[name]["lists"])
 
 def add_languages (iocwbl, iocmlf):
     """Add languages from the IOC Multilingual file 'iocmlf' to the 'iocwbl'."""
