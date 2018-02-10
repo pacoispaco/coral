@@ -94,7 +94,7 @@ different species in another list.
 For amateur ornothologists who want to keep track of which birds they've seen,
 the current situation with names and name lists can be confusing!
 
-The main sources used in *Twitchspot taxonomy* are:
+The main sources I have used over the years are:
 
  * [IOC World Bird List](http://www.worldbirdnames.org/ioc-lists/master-list-2/)
  * [Birdlife Sweden](http://birdlife.se/tk/svenska-namn-pa-varldens-faglar/)
