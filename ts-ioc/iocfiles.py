@@ -30,6 +30,22 @@ class MultipleIocFilesOfSameType (Exception):
 class MultipleVersionsOfIocFiles (Exception):
     pass
 
+def _is_master_wb (wb):
+    """True if 'wb' is an IOC Masterfile Excel workbook, otherwise False."""
+    return wb.worksheets[0].title == "Master"
+
+def _is_other_lists_wb (wb):
+    """True if 'wb' is an IOC Other Lists Excel workbook, otherwise False."""
+    return "vs_other_lists" in wb.worksheets[0].title
+
+def _is_multilingual_wb (wb):
+    """True if 'wb' is an IOC Multilingual Excel workbook, otherwise False."""
+    return wb.worksheets[0].title == "List" and wb.worksheets[1].title == "Sources"
+
+def _is_complementary_wb (wb):
+    """True if 'wb' is an IOC Complementary Excel workbook, otherwise False."""
+    return "IOC" in wb.worksheets[0].title
+
 def sorted_ioc_files (filepaths):
     """Returns a list of IOC File class instances sorted in the order they
        should be processed, based on the list of 'filepaths'."""
@@ -41,16 +57,21 @@ def sorted_ioc_files (filepaths):
         except xlxs.InvalidFileException:
             print ("Error: '%s' is not an Excel file (.xlxs)." % (path))
             raise
-        if wb.worksheets[0].title == "Master":
+        if _is_master_wb (wb):
             result.append (IocMasterFile (wb, path))
-        elif "vs_other_lists" in wb.worksheets[0].title:
+        elif _is_other_lists_wb (wb):
             result.append (IocOtherListsFile (wb, path))
-        elif wb.worksheets[0].title == "List" and wb.worksheets[1].title == "Sources":
+        elif _is_multilingual_wb (wb):
             result.append (IocMultilingualFile (wb, path))
-        elif "IOC" in wb.worksheets[0].title:
+        elif _is_complementary_wb (wb):
             result.append (IocComplementaryFile (wb, path))
         else:
-            print ("Error: '%s' is not an recognized IOC file." % (path))
+            msg = """Error: '%s' is not an recognized IOC file.
+An IOC Master file must have the title 'Master' in the first worksheet.
+An IOC Other Lists file must have the word 'vs_other_lists' in the title of the first worksheet.
+An IOC Multilingual file must have the word 'List' in the title of the first worksheet and 'Sources' in the title of the second worksheet.
+An IOC Complementary file must have the word 'IOC' in the first worksheet."""
+            print (msg % (path))
             raise UnrecognizedIocFile (path)
     # Make sure we don't have multiple IOC files of the same type
     orders = [file.order for file in result]
