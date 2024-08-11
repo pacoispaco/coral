@@ -9,88 +9,100 @@ import re
 # Constants: top taxa names in IOC
 TOP_TAXA_NAMES = ["NEOAVES", "NEOGNATHAE", "PALEOGNATHAE"]
 
+
 class InvalidIocMasterFile (Exception):
     pass
+
 
 class InvalidIocOtherListsFile (Exception):
     pass
 
+
 class InvalidIocMultilingualFile (Exception):
     pass
+
 
 class InvalidIocComplementaryFile (Exception):
     pass
 
+
 class UnrecognizedIocFile (Exception):
     pass
+
 
 class MultipleIocFilesOfSameType (Exception):
     pass
 
+
 class MultipleVersionsOfIocFiles (Exception):
     pass
 
-def _is_master_wb (wb):
+
+def _is_master_wb(wb):
     """True if 'wb' is an IOC Masterfile Excel workbook, otherwise False."""
     return wb.worksheets[0].title == "Master"
 
-def _is_other_lists_wb (wb):
+
+def _is_other_lists_wb(wb):
     """True if 'wb' is an IOC Other Lists Excel workbook, otherwise False."""
     return "vs_other_lists" in wb.worksheets[0].title
 
-def _is_multilingual_wb (wb):
+
+def _is_multilingual_wb(wb):
     """True if 'wb' is an IOC Multilingual Excel workbook, otherwise False."""
     return wb.worksheets[0].title == "List" and wb.worksheets[1].title == "Sources"
 
-def _is_complementary_wb (wb):
+
+def _is_complementary_wb(wb):
     """True if 'wb' is an IOC Complementary Excel workbook, otherwise False."""
     return "IOC" in wb.worksheets[0].title
 
-def sorted_ioc_files (filepaths):
+
+def sorted_ioc_files(filepaths):
     """Returns a list of IOC File class instances sorted in the order they
        should be processed, based on the list of 'filepaths'."""
-    assert type (filepaths) == list
+    assert type(filepaths) is list
     result = []
     for path in filepaths:
         try:
-            wb = xlxs.load_workbook (path)
+            wb = xlxs.load_workbook(path)
         except xlxs.InvalidFileException:
-            print ("Error: '%s' is not an Excel file (.xlxs)." % (path))
+            print("Error: '%s' is not an Excel file (.xlxs)." % (path))
             raise
-        if _is_master_wb (wb):
-            result.append (IocMasterFile (wb, path))
-        elif _is_other_lists_wb (wb):
-            result.append (IocOtherListsFile (wb, path))
-        elif _is_multilingual_wb (wb):
-            result.append (IocMultilingualFile (wb, path))
-        elif _is_complementary_wb (wb):
-            result.append (IocComplementaryFile (wb, path))
+        if _is_master_wb(wb):
+            result.append(IocMasterFile(wb, path))
+        elif _is_other_lists_wb(wb):
+            result.append(IocOtherListsFile(wb, path))
+        elif _is_multilingual_wb(wb):
+            result.append(IocMultilingualFile(wb, path))
+        elif _is_complementary_wb(wb):
+            result.append(IocComplementaryFile(wb, path))
         else:
             msg = """Error: '%s' is not an recognized IOC file.
 An IOC Master file must have the title 'Master' in the first worksheet.
 An IOC Other Lists file must have the word 'vs_other_lists' in the title of the first worksheet.
 An IOC Multilingual file must have the word 'List' in the title of the first worksheet and 'Sources' in the title of the second worksheet.
 An IOC Complementary file must have the word 'IOC' in the first worksheet."""
-            print (msg % (path))
-            raise UnrecognizedIocFile (path)
+            print(msg % (path))
+            raise UnrecognizedIocFile(path)
     # Make sure we don't have multiple IOC files of the same type
     orders = [file.order for file in result]
-    if not len (set (orders)) == len (orders):
-        print ("Error: Multiple IOC files of same type.")
-        raise MultipleIocFilesOfSameType (filepaths)
+    if not len(set(orders)) == len(orders):
+        print("Error: Multiple IOC files of same type.")
+        raise MultipleIocFilesOfSameType(filepaths)
     # Make sure all IOC files have the same version
     versions = [file.version for file in result]
-    if not len (set (versions)) <= 1:
-        print ("Error: Multiple versions of IOC files.")
-        raise MultipleVersionsOfIocFiles (filepaths)
+    if not len(set(versions)) <= 1:
+        print("Error: Multiple versions of IOC files.")
+        raise MultipleVersionsOfIocFiles(filepaths)
     # Return the list of IOC files sorted by their 'order' attribute
-    return sorted (result, key=lambda iocfile: iocfile.order)
+    return sorted(result, key=lambda iocfile: iocfile.order)
 
 
 class IocMasterFile (object):
     """Represents a IOC Master file (Excel)."""
 
-    def __init__ (self, workbook, path):
+    def __init__(self, workbook, path):
         """Initialize with Excel 'workbook'."""
         self.order = 1
         self.workbook = workbook
@@ -102,14 +114,14 @@ class IocMasterFile (object):
         self.index = {}           # This index contains all taxa keyed by name
         self.taxonomy_stats = {}
         if self.workbook.worksheets[0].title == "Master":
-            s = self.workbook.worksheets[0].cell (row=1, column=2).value
+            s = self.workbook.worksheets[0].cell(row=1, column=2).value
             regexp = re.compile (".*\((.*)\).*")
             self.version = regexp.match (s).groups()[0]
         else:
-            print ("Error; '%s' is not a avalid IOC Master File" % (filepath))
-            raise InvalidIocMasterFile (filepath)
+            print("Error; '%s' is not a avalid IOC Master File" % (self.path))
+            raise InvalidIocMasterFile(self.path)
 
-    def read (self):
+    def read(self):
         """Read the taxonomy data into the attribute 'self.taxonomy' and
            save statistics in the attribute 'self.taxonomy_stats'."""
         self.taxonomy_stats = {'infraclass_count': 0,
@@ -119,7 +131,7 @@ class IocMasterFile (object):
                                'species_count': 0,
                                'subspecies_count': 0}
         ws = self.workbook.worksheets[0]
-        for row in ws.iter_rows (min_row=5):
+        for row in ws.iter_rows(min_row=5):
             infraclass = row[0].value
             order = row[1].value
             family = row[2].value
@@ -127,8 +139,8 @@ class IocMasterFile (object):
             genus = row[4].value
             species = row[5].value
             subspecies = row[6].value
-            taxon = {'other_classifications': [], # Taxa in other lists which
-                                                  # are equivalent to this taxon
+            taxon = {'other_classifications': [],  # Taxa in other lists which
+                                                   # are equivalent to this taxon
                      'authority': row[7].value,
                      'common_names': {'en': row[8].value},
                      'breeding_range': row[9].value,
@@ -140,29 +152,29 @@ class IocMasterFile (object):
             if infraclass:
                 taxon['rank'] = "Infraclass"
                 taxon['name'] = infraclass
-                self.taxonomy.append (taxon)
+                self.taxonomy.append(taxon)
                 self.index[infraclass] = taxon
                 self.taxonomy_stats['infraclass_count'] += 1
             elif order:
                 taxon['rank'] = "Order"
                 taxon['name'] = order
                 taxon['supertaxon'] = self.taxonomy[-1]['name']
-                self.taxonomy[-1]['subtaxa'].append (taxon)
+                self.taxonomy[-1]['subtaxa'].append(taxon)
                 self.index[order] = taxon
                 self.taxonomy_stats['order_count'] += 1
             elif family:
                 taxon['rank'] = "Family"
                 taxon['name'] = family
                 taxon['supertaxon'] = self.taxonomy[-1]['subtaxa'][-1]['name']
-                self.taxonomy[-1]['subtaxa'][-1]['subtaxa'].append (taxon)
+                self.taxonomy[-1]['subtaxa'][-1]['subtaxa'].append(taxon)
                 self.index[family] = taxon
                 self.taxonomy_stats['family_count'] += 1
             elif genus:
                 taxon['rank'] = "Genus"
                 # Strip trailing "extinct" characters '\u2020' and whitespace
-                taxon['name'] = genus.title ().strip ('\u2020').strip ()
+                taxon['name'] = genus.title().strip('\u2020').strip()
                 taxon['supertaxon'] = self.taxonomy[-1]['subtaxa'][-1]['subtaxa'][-1]['name']
-                self.taxonomy[-1]['subtaxa'][-1]['subtaxa'][-1]['subtaxa'].append (taxon)
+                self.taxonomy[-1]['subtaxa'][-1]['subtaxa'][-1]['subtaxa'].append(taxon)
                 self.index[genus] = taxon
                 self.taxonomy_stats['genus_count'] += 1
             elif species:
@@ -171,8 +183,8 @@ class IocMasterFile (object):
                 taxon['supertaxon'] = self.taxonomy[-1]['subtaxa'][-1]['subtaxa'][-1]['subtaxa'][-1]['name']
                 genus = taxon['supertaxon']
                 # Strip trailing "extinct" characters '\u2020' and whitespace
-                taxon['binomial_name'] = (genus + " " + species).strip ('\u2020').strip ()
-                self.taxonomy[-1]['subtaxa'][-1]['subtaxa'][-1]['subtaxa'][-1]['subtaxa'].append (taxon)
+                taxon['binomial_name'] = (genus + " " + species).strip('\u2020').strip()
+                self.taxonomy[-1]['subtaxa'][-1]['subtaxa'][-1]['subtaxa'][-1]['subtaxa'].append(taxon)
                 self.index[taxon['binomial_name']] = taxon
                 self.taxonomy_stats['species_count'] += 1
             elif subspecies:
@@ -182,10 +194,10 @@ class IocMasterFile (object):
                 genus = self.taxonomy[-1]['subtaxa'][-1]['subtaxa'][-1]['subtaxa'][-1]['name']
                 species = taxon['supertaxon']
                 # Strip trailing "extinct" characters '\u2020' and whitespace
-                trinomial_name = (genus + " " + species + " " + subspecies).strip ('\u2020').strip ()
+                trinomial_name = (genus + " " + species + " " + subspecies).strip('\u2020').strip ()
                 # Strip "extinct" characters '\u2020' in trinomial name
-                taxon['trinomial_name'] = trinomial_name.replace (" \u2020", "")
-                self.taxonomy[-1]['subtaxa'][-1]['subtaxa'][-1]['subtaxa'][-1]['subtaxa'][-1]['subtaxa'].append (taxon)
+                taxon['trinomial_name'] = trinomial_name.replace(" \u2020", "")
+                self.taxonomy[-1]['subtaxa'][-1]['subtaxa'][-1]['subtaxa'][-1]['subtaxa'][-1]['subtaxa'].append(taxon)
                 self.index[taxon['trinomial_name']] = taxon
                 self.taxonomy_stats['subspecies_count'] += 1
 
@@ -193,7 +205,7 @@ class IocMasterFile (object):
 class IocOtherListsFile (object):
     """Represents a IOC Other Lists file (Excel)."""
 
-    def __init__ (self, workbook, path):
+    def __init__(self, workbook, path):
         """Initialize with the Excel 'workbook'."""
         self.order = 2
         self.workbook = workbook
@@ -217,14 +229,14 @@ class IocOtherListsFile (object):
                       'ioc_7_2': 'Gill, F & D Donsker (Eds). 2017. IOC World Bird List (v 7.2)',
                       'ioc_7_1': 'Gill, F & D Donsker (Eds). 2017. IOC World Bird List (v 7.1)'}
         if "vs_other_lists" in self.workbook.worksheets[0].title:
-            s = self.workbook.worksheets[0].cell (row=1, column=2).value
-            regexp = re.compile (".*\(v (.*)\).*")
-            self.version = regexp.match (s).groups()[0]
+            s = self.workbook.worksheets[0].cell(row=1, column=2).value
+            regexp = re.compile(".*\(v (.*)\).*")
+            self.version = regexp.match(s).groups()[0]
         else:
-            print ("Error; '%s' is not a valid IOC Other Lists File" % (filepath))
-            raise InvalidIocOtherListsFile (filepath)
+            print("Error; '%s' is not a valid IOC Other Lists File" % (self.path))
+            raise InvalidIocOtherListsFile(self.path)
 
-    def read (self):
+    def read(self):
         """Read the taxonomy data into the attribute 'self.taxonomy' and
            save statistics in the attribute 'self.taxonomy_stats'."""
         # Note that the global variable 'master_taxonomy' is a list that will maintain the
@@ -237,7 +249,7 @@ class IocOtherListsFile (object):
                                'subspecies_count': 0,
                                'only_in_other_lists_count': 0}
         ws = self.workbook.worksheets[0]
-        for row in ws.iter_rows (min_row=2):
+        for row in ws.iter_rows(min_row=2):
             name = row[1].value
             entry = {'seq_no': row[0].value,
                      'name': name,
@@ -277,14 +289,14 @@ class IocOtherListsFile (object):
                                            'family': row[27].value}}}
             if name:
                 self.taxonomy[name] = entry
-                if len (name.split ()) == 2:
+                if len(name.split()) == 2:
                     self.taxonomy_stats['species_count'] += 1
                 else:
                     self.taxonomy_stats['subspecies_count'] += 1
                 latest_name = name
             else:
-                self.nonindexed.append (entry)
-                self.taxonomy[latest_name]['following_entries'].append (entry)
+                self.nonindexed.append(entry)
+                self.taxonomy[latest_name]['following_entries'].append(entry)
                 self.taxonomy_stats['only_in_other_lists_count'] += 1
 
 
@@ -292,7 +304,7 @@ class IocMultilingualFile (object):
     """Represents a IOC Multilingual file (Excel). Languages are encoded with ISO
        639-2 codes (which are not used in the actual file)."""
 
-    def __init__ (self, workbook, path):
+    def __init__(self, workbook, path):
         """Initialize with the Excel 'workbook'."""
         self.order = 3
         self.workbook = workbook
@@ -302,14 +314,14 @@ class IocMultilingualFile (object):
                                     # name
         self.taxonomy_stats = {}
         if self.workbook.worksheets[0].title == "List" and self.workbook.worksheets[1].title == "Sources":
-            s = self.workbook.worksheets[1].cell (row=1, column=1).value
-            regexp = re.compile ("[A-Za-z ]*(\d*\.\d*).*")
-            self.version = regexp.match (s).groups()[0]
+            s = self.workbook.worksheets[1].cell(row=1, column=1).value
+            regexp = re.compile("[A-Za-z ]*(\d*\.\d*).*")
+            self.version = regexp.match(s).groups()[0]
         else:
-            print ("Error; '%s' is not a valid IOC Multilingual File" % (filepath))
-            raise InvalidIocMultilingualFile (filepath)
+            print("Error; '%s' is not a valid IOC Multilingual File" % (self.path))
+            raise InvalidIocMultilingualFile(self.path)
 
-    def read (self):
+    def read(self):
         """Read the taxonomy data into the attribute 'self.taxonomy' and
            save statistics in the attribute 'self.taxonomy_stats'."""
         # Note that the global variable 'master_taxonomy' is a list that will maintain the
@@ -322,8 +334,8 @@ class IocMultilingualFile (object):
                                'subspecies_count': 0}
         ws = self.workbook.worksheets[0]
         i = 0
-        for row in ws.iter_rows (min_row=4):
-            if row[3].value and len (row[3].value.split ()) == 2:
+        for row in ws.iter_rows(min_row=4):
+            if row[3].value and len(row[3].value.split()) == 2:
                 name = row[3].value
                 self.taxonomy_stats['species_count'] += 1
                 i = 1
@@ -363,7 +375,7 @@ class IocMultilingualFile (object):
 class IocComplementaryFile (object):
     """Represents a IOC Complementary file (Excel)."""
 
-    def __init__ (self, workbook, path):
+    def __init__(self, workbook, path):
         """Initialize with the Excel 'workbook'."""
         self.order = 4
         self.workbook = workbook
@@ -374,13 +386,13 @@ class IocComplementaryFile (object):
         self.taxonomy_stats = {}
         if "IOC" in self.workbook.worksheets[0].title:
             s = self.workbook.worksheets[0].title
-            regexp = re.compile ("[A-Za-z ]*(\d*\.\d*).*")
+            regexp = re.compile("[A-Za-z ]*(\d*\.\d*).*")
             self.version = regexp.match (s).groups()[0]
         else:
-            print ("Error; '%s' is not a valid IOC Complementary File" % (filepath))
-            raise InvalidIocComplemntaryFile (filepath)
+            print("Error; '%s' is not a valid IOC Complementary File" % (self.path))
+            raise InvalidIocComplemntaryFile (self.path)
 
-    def read (self):
+    def read(self):
         """Read the taxonomy data into the attribute 'self.taxonomy' and
            save statistics in the attribute 'self.taxonomy_stats'."""
         # Note that the global variable 'master_taxonomy' is a list that will maintain the
@@ -393,7 +405,7 @@ class IocComplementaryFile (object):
                                'subspecies_count': 0}
         ws = self.workbook.worksheets[0]
         i = 0
-        for row in ws.iter_rows (min_row=3):
+        for row in ws.iter_rows(min_row=3):
             if row[2].value == "Blank":
                 name = row[6].value
                 self.taxonomy[name] = {'name': name,
@@ -401,13 +413,13 @@ class IocComplementaryFile (object):
                                        'code': row[10].value,
                                        'comment': row[11].value}
             elif row[2].value == "ORDER":
-                name = row[6].value.split ()[1],
+                name = row[6].value.split()[1],
                 self.taxonomy[name] = {'name': name,
                                        'rank': 'Order',
                                        'code': row[10].value,
                                        'comment': row[11].value}
             elif row[2].value == "Family":
-                name = row[6].value.split ()[1]
+                name = row[6].value.split()[1]
                 self.taxonomy[name] = {'species_count': row[3].value,
                                        'name_eng': row[4].value,
                                        'name': name,
@@ -435,7 +447,7 @@ class IocComplementaryFile (object):
                                        'comment': row[11].value}
                 species = row[6].value
             elif row[2].value == "ssp":
-                name = species + ' ' + row[6].value.split ()[2]
+                name = species + ' ' + row[6].value.split()[2]
                 self.taxonomy[name] = {'extinct': row[3].value,
                                        'name': name,
                                        'rank': 'Subspecies',
@@ -452,25 +464,25 @@ class IocData (object):
        level taxa are available in the attribute 'top_taxa'. ALl other taxa can
        be retrieved by name with the feature 'taxon'."""
 
-    def __init__ (self, directory):
+    def __init__(self, directory):
         """Initialize with the specified 'directory'."""
-        assert os.path.exists (directory)
-        assert os.path.isdir (directory)
+        assert os.path.exists(directory)
+        assert os.path.isdir(directory)
         self.directory = directory
-        self.top_taxa = self.__top_taxa__ ()
+        self.top_taxa = self.__top_taxa__()
 
-    def __top_taxa__ (self):
+    def __top_taxa__(self):
         """A list of the top IocTaxon in IOC. These IocTaxa have the rank
            "Infraclass"."""
-        l = []
+        result = []
         for name in TOP_TAXA_NAMES:
-            l.append (IocTaxon (name))
-        return l
+            result.append(IocTaxon(name))
+        return result
 
-    def taxon (self, name):
+    def taxon(self, name):
         """Return the IocTaxon with the given 'name'. Returns None if there is
            no such IocTaxon."""
-        t = IocTaxon (name, self.directory)
+        t = IocTaxon(name, self.directory)
         if t.exists:
             return t
         else:
@@ -482,18 +494,18 @@ class IocTaxon (object):
        Master file, Complementary file, Multilingual file and Other Lists
        file. All data for the taxon is available in the attribute 'data'."""
 
-    def __init__ (self, name, directory):
+    def __init__(self, name, directory):
         """Initialize with the name, that can be a binomial species or a
            trinomial subspecies name."""
         self.data = {'name': name}
-        self.filename = os.path.join (directory, name + '.json')
-        self.exists = os.path.exists (self.filename)
-        self.__load__ ()
+        self.filename = os.path.join(directory, name + '.json')
+        self.exists = os.path.exists(self.filename)
+        self.__load__()
 
-    def __load__ (self):
+    def __load__(self):
         """Load from JSON file."""
         if self.exists:
             fname = self.data['name'] + '.json'
-            f = open (fname)
-            self.data = json.load (f)
-            f.close ()
+            f = open(fname)
+            self.data = json.load(f)
+            f.close()

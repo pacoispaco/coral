@@ -180,9 +180,12 @@ def handle_files(filepaths, write, info, verbose, dry_run):
        don't write taxonomy info to files or to stdout."""
     if dry_run:
         print("Dry-run: No taxonomy information will be written to files or to stdout")
+    if verbose:
+        print(f"IOC files: {filepaths}")
     iocwbl = IocWbl()
     ioc_files = iocfiles.sorted_ioc_files(filepaths)
     ioc_dir = os.path.join(DEFAULT_IOC_DIR, DEFAULT_IOC_TAXONOMY_DIR)
+
     # First handle the IOC Master file or read existing data from JSON files
     if len(ioc_files) == 0 or not type(ioc_files[0]) is iocfiles.IocMasterFile:
         if not os.path.exists(ioc_dir):
@@ -202,7 +205,9 @@ def handle_files(filepaths, write, info, verbose, dry_run):
         iocwbl.index = ioc_files[0].index
         iocwbl.stats = ioc_files[0].taxonomy_stats
         iocwbl.version = ioc_files[0].version
-    # Now read and handle the rest of the files in the correct order.
+
+    # Now read and handle the rest of the files in the correct order, and add complementary data
+    # from them.
     for ioc_file in ioc_files[1:]:
         if type(ioc_file) is iocfiles.IocOtherListsFile:
             if verbose:
@@ -216,7 +221,7 @@ def handle_files(filepaths, write, info, verbose, dry_run):
             add_languages(iocwbl, ioc_file)
         elif type(ioc_file) is iocfiles.IocComplementaryFile:
             if verbose:
-                print("Reading IOC Complementary file '%s' ..." % (ioc_file))
+                print("Reading IOC Complementary file '%s' ..." % (ioc_file.path))
             ioc_file.read()
             add_complementary_info(iocwbl, ioc_file)
     if not dry_run:
