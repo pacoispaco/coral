@@ -381,8 +381,7 @@ class IocComplementaryFile (object):
         self.workbook = workbook
         self.path = path
         self.version = None
-        self.taxonomy = {}          # This object contains taxa indexed by their
-                                    # name
+        self.taxonomy = {}          # This object contains taxa indexed by their name
         self.taxonomy_stats = {}
         if "IOC" in self.workbook.worksheets[0].title:
             s = self.workbook.worksheets[0].title
@@ -390,7 +389,7 @@ class IocComplementaryFile (object):
             self.version = regexp.match (s).groups()[0]
         else:
             print("Error; '%s' is not a valid IOC Complementary File" % (self.path))
-            raise InvalidIocComplemntaryFile (self.path)
+            raise InvalidIocComplementaryFile(self.path)
 
     def read(self):
         """Read the taxonomy data into the attribute 'self.taxonomy' and
