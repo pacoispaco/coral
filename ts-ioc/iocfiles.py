@@ -2,6 +2,7 @@
 
 """This module contains methods and classes for reading IOC files."""
 
+import json
 import os, os.path
 import openpyxl.reader.excel as xlxs
 import re
@@ -81,8 +82,9 @@ def sorted_ioc_files(filepaths):
             msg = """Error: '%s' is not an recognized IOC file.
 An IOC Master file must have the title 'Master' in the first worksheet.
 An IOC Other Lists file must have the word 'vs_other_lists' in the title of the first worksheet.
-An IOC Multilingual file must have the word 'List' in the title of the first worksheet and 'Sources' in the title of the second worksheet.
-An IOC Complementary file must have the word 'IOC' in the first worksheet."""
+An IOC Multilingual file must have the word 'List' in the title of the first worksheet and
+'Sources' in the title of the second worksheet. An IOC Complementary file must have the word
+'IOC' in the first worksheet."""
             print(msg % (path))
             raise UnrecognizedIocFile(path)
     # Make sure we don't have multiple IOC files of the same type
@@ -403,59 +405,58 @@ class IocComplementaryFile (object):
                                'species_count': 0,
                                'subspecies_count': 0}
         ws = self.workbook.worksheets[0]
-        i = 0
         for row in ws.iter_rows(min_row=3):
-            if row[2].value == "Blank":
-                name = row[6].value
+            if row[1].value == "Blank":
+                name = row[5].value
                 self.taxonomy[name] = {'name': name,
                                        'rank': 'Infraclass',
-                                       'code': row[10].value,
-                                       'comment': row[11].value}
-            elif row[2].value == "ORDER":
-                name = row[6].value.split()[1],
+                                       'code': row[9].value,
+                                       'comment': row[10].value}
+            elif row[1].value == "ORDER":
+                name = row[5].value.split()[1],
                 self.taxonomy[name] = {'name': name,
                                        'rank': 'Order',
-                                       'code': row[10].value,
-                                       'comment': row[11].value}
-            elif row[2].value == "Family":
-                name = row[6].value.split()[1]
-                self.taxonomy[name] = {'species_count': row[3].value,
-                                       'name_eng': row[4].value,
+                                       'code': row[9].value,
+                                       'comment': row[10].value}
+            elif row[1].value == "Family":
+                name = row[5].value.split()[1]
+                self.taxonomy[name] = {'species_count': row[2].value,
+                                       'name_eng': row[3].value,
                                        'name': name,
                                        'rank': 'Family',
-                                       'code': row[10].value,
-                                       'comment': row[11].value}
-            elif row[2].value == "Genus":
-                name = row[6].value
-                self.taxonomy[name] = {'extinct': row[3].value,
+                                       'code': row[9].value,
+                                       'comment': row[10].value}
+            elif row[1].value == "Genus":
+                name = row[5].value
+                self.taxonomy[name] = {'extinct': row[2].value,
                                        'name': name,
                                        'rank': 'Genus',
-                                       'authority': row[7].value,
-                                       'code': row[10].value,
-                                       'comment': row[11].value}
-            elif row[2].value == "Species":
-                name = row[6].value
-                self.taxonomy[name] = {'extinct': row[3].value,
+                                       'authority': row[6].value,
+                                       'code': row[9].value,
+                                       'comment': row[10].value}
+            elif row[1].value == "Species":
+                name = row[5].value
+                self.taxonomy[name] = {'extinct': row[2].value,
                                        'name': name,
                                        'rank': 'Species',
-                                       'name_eng': row[4].value,
-                                       'authority': row[7].value,
-                                       'breeding_range': row[8].value,
-                                       'nonbreeding_range': row[9].value,
-                                       'code': row[10].value,
-                                       'comment': row[11].value}
+                                       'name_eng': row[3].value,
+                                       'authority': row[6].value,
+                                       'breeding_range': row[7].value,
+                                       'nonbreeding_range': row[8].value,
+                                       'code': row[9].value,
+                                       'comment': row[10].value}
                 species = row[6].value
             elif row[2].value == "ssp":
-                name = species + ' ' + row[6].value.split()[2]
-                self.taxonomy[name] = {'extinct': row[3].value,
+                name = species + ' ' + row[5].value.split()[2]
+                self.taxonomy[name] = {'extinct': row[2].value,
                                        'name': name,
                                        'rank': 'Subspecies',
-                                       'name_eng': row[4].value,
-                                       'authority': row[7].value,
-                                       'breeding_range': row[8].value,
-                                       'nonbreeding_range': row[9].value,
-                                       'code': row[10].value,
-                                       'comment': row[11].value}
+                                       'name_eng': row[3].value,
+                                       'authority': row[6].value,
+                                       'breeding_range': row[7].value,
+                                       'nonbreeding_range': row[8].value,
+                                       'code': row[9].value,
+                                       'comment': row[10].value}
 
 
 class IocData (object):
