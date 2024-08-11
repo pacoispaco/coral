@@ -173,10 +173,13 @@ def print_taxonomy_info(iocwbl, verbose):
                                           iocwbl.stats['subspecies_count']))
 
 
-def handle_files(filepaths, write, info, verbose):
+def handle_files(filepaths, write, info, verbose, dry_run):
     """Handle the IOC files. if 'write' then write data to files. If 'info'
        then print information on the contents of the files. If 'verbose'
-       then print information on progress and what's happening."""
+       then print information on progress and what's happening. If 'dry_run'
+       don't write taxonomy info to files or to stdout."""
+    if dry_run:
+        print("Dry-run: No taxonomy information will be written to files or to stdout")
     iocwbl = IocWbl()
     ioc_files = iocfiles.sorted_ioc_files(filepaths)
     ioc_dir = os.path.join(DEFAULT_IOC_DIR, DEFAULT_IOC_TAXONOMY_DIR)
@@ -216,10 +219,11 @@ def handle_files(filepaths, write, info, verbose):
                 print("Reading IOC Complementary file '%s' ..." % (ioc_file))
             ioc_file.read()
             add_complementary_info(iocwbl, ioc_file)
-    if write:
-        write_taxonomy_to_files(iocwbl, verbose)
-    else:
-        print_to_stdout(iocwbl, verbose)
+    if not dry_run:
+        if write:
+            write_taxonomy_to_files(iocwbl, verbose)
+        else:
+            print_to_stdout(iocwbl, verbose)
     if info:
         print_taxonomy_info(iocwbl, verbose)
 
@@ -232,6 +236,8 @@ def main():
                                       to stdout.')
     parser.add_argument('-v', '--verbose', action='store_true', default=False,
                         help="print info about what's going on [False]")
+    parser.add_argument('-d', '--dry-run', action='store_true', default=False,
+                        help="do not write any taxonomy files or print them to stdout [False]")
     parser.add_argument('-i', '--info', action='store_true', default=False,
                         help="print info about the IOC files [False]")
     parser.add_argument('-w', '--write', action='store_true', default=False,
@@ -244,7 +250,7 @@ def main():
             print("Error: File '%s' not found." % (file))
             sys.exit(ERROR_FILE_NOT_FOUND)
     # Then read the files in correct order
-    handle_files(args.ioc_files, args.write, args.info, args.verbose)
+    handle_files(args.ioc_files, args.write, args.info, args.verbose, args.dry_run)
 
 
 if __name__ == "__main__":
