@@ -1,3 +1,5 @@
 openpyxl
-pycountry
+#pycountry
+langcodes
 Flask
+jupyterlab
