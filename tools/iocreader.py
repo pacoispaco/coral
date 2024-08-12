@@ -17,7 +17,7 @@ ERROR_DATA_DIR_EXISTS_ALREADY = 3
 ERROR_NO_MASTER_DATA = 4
 
 # Directory and file name constants
-DEFAULT_IOC_DIR = "./data-ioc"
+DEFAULT_DATA_DIR = "./gendata"
 DEFAULT_IOC_TAXONOMY_DIR = "ioc"
 VERSION_FILE_NAME = "version.json"
 
@@ -63,7 +63,7 @@ def write_taxon_to_file(directory, taxon):
 
 def write_taxonomy_to_files(iocwbl, verbose):
     """Write JSON representations of the taxa in the master taxonomy to files."""
-    p = os.path.join(DEFAULT_IOC_DIR, DEFAULT_IOC_TAXONOMY_DIR)
+    p = os.path.join(DEFAULT_DATA_DIR, DEFAULT_IOC_TAXONOMY_DIR)
     if verbose:
         print("Writing to files ...")
     if os.path.exists(p):
@@ -104,7 +104,7 @@ def load_ioc_subtaxa(iocwbl, taxon, ioc_dir):
 def load_ioc_taxonomy(iocwbl, ioc_dir, verbose):
     """Load IOC taxonomy from files."""
     # Read version
-    p = os.path.join(DEFAULT_IOC_DIR, DEFAULT_IOC_TAXONOMY_DIR)
+    p = os.path.join(DEFAULT_DATA_DIR, DEFAULT_IOC_TAXONOMY_DIR)
     f = open(os.path.join(p, VERSION_FILE_NAME))
     iocwbl.version = json.load(f)["version"]
     f.close()
@@ -184,7 +184,7 @@ def handle_files(filepaths, write, info, verbose, dry_run):
         print(f"IOC files: {filepaths}")
     iocwbl = IocWbl()
     ioc_files = iocfiles.sorted_ioc_files(filepaths)
-    ioc_dir = os.path.join(DEFAULT_IOC_DIR, DEFAULT_IOC_TAXONOMY_DIR)
+    ioc_dir = os.path.join(DEFAULT_DATA_DIR, DEFAULT_IOC_TAXONOMY_DIR)
 
     # First handle the IOC Master file or read existing data from JSON files
     if len(ioc_files) == 0 or not type(ioc_files[0]) is iocfiles.IocMasterFile:
