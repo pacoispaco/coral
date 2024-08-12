@@ -189,17 +189,17 @@ def handle_files(filepaths, write, info, verbose, dry_run):
     # First handle the IOC Master file or read existing data from JSON files
     if len(ioc_files) == 0 or not type(ioc_files[0]) is iocfiles.IocMasterFile:
         if not os.path.exists(ioc_dir):
-            print("Error: No master data in '%s' and no IOC Master File to read." % (ioc_dir))
+            print(f"Error: No master data in '{ioc_dir}' and no IOC Master File to read.")
             sys.exit(ERROR_NO_MASTER_DATA)
         elif verbose:
-            print("Loading existing master data from '%s' ..." % (ioc_dir))
+            print(f"Loading existing master data from '{ioc_dir}' ...")
         load_ioc_taxonomy(iocwbl, ioc_dir, verbose)
         if verbose:
-            print("IOC Version: %s" % (iocwbl.version))
+            print(f"IOC Version: {iocwbl.version}")
     elif type(ioc_files[0]) is iocfiles.IocMasterFile:
         if verbose:
-            print("Reading IOC Master File %s ..." % (ioc_files[0].path))
-            print("IOC Version: %s" % (ioc_files[0].version))
+            print(f"Reading IOC Master File '{ioc_files[0].path}' ...")
+            print(f"IOC Version: {ioc_files[0].version}")
         ioc_files[0].read()
         iocwbl.taxonomy = ioc_files[0].taxonomy
         iocwbl.index = ioc_files[0].index
@@ -211,17 +211,17 @@ def handle_files(filepaths, write, info, verbose, dry_run):
     for ioc_file in ioc_files[1:]:
         if type(ioc_file) is iocfiles.IocOtherListsFile:
             if verbose:
-                print("Reading IOC Other Lists file '%s' ..." % (ioc_file))
+                print(f"Reading IOC Other Lists file '{ioc_file.path}' ...")
             ioc_file.read()
             add_taxonomies(iocwbl, ioc_file)
         elif type(ioc_file) is iocfiles.IocMultilingualFile:
             if verbose:
-                print("Reading IOC Multilingual file '%s' ..." % (ioc_file))
+                print(f"Reading IOC Multilingual file '{ioc_file.path}' ...")
             ioc_file.read()
             add_languages(iocwbl, ioc_file)
         elif type(ioc_file) is iocfiles.IocComplementaryFile:
             if verbose:
-                print("Reading IOC Complementary file '%s' ..." % (ioc_file.path))
+                print(f"Reading IOC Complementary file '{ioc_file.path}' ...")
             ioc_file.read()
             add_complementary_info(iocwbl, ioc_file)
     if not dry_run:
@@ -252,7 +252,7 @@ def main():
     # First check if all files exist
     for file in args.ioc_files:
         if not os.path.isfile(file):
-            print("Error: File '%s' not found." % (file))
+            print(f"Error: File '{file}' not found.")
             sys.exit(ERROR_FILE_NOT_FOUND)
     # Then read the files in correct order
     handle_files(args.ioc_files, args.write, args.info, args.verbose, args.dry_run)

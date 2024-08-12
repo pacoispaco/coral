@@ -44,6 +44,21 @@ def _is_master_wb(wb):
     return wb.worksheets[0].title == "Master"
 
 
+def _master_wb_version(wb):
+    """Returns the IOC version number of the workbook. Returns None if not able to establish
+       the version."""
+    if _is_master_wb(wb):
+        if wb.worksheets[0].cell(row=1, column=2).value:
+            version_string = wb.worksheets[0].cell(row=1, column=2).value
+        elif wb.worksheets[0].cell(row=1, column=3).value:
+            version_string = wb.worksheets[0].cell(row=1, column=3).value
+        regexp = re.compile("IOC WORLD BIRD LIST \((.*)\)")
+        mo = regexp.search(version_string)
+        return mo[1]
+    else:
+        return None
+
+
 def _is_other_lists_wb(wb):
     """True if 'wb' is an IOC Other Lists Excel workbook, otherwise False."""
     return "vs_other_lists" in wb.worksheets[0].title
@@ -54,9 +69,56 @@ def _is_multilingual_wb(wb):
     return wb.worksheets[0].title == "List" and wb.worksheets[1].title == "Sources"
 
 
+def _multilingual_wb_version(wb):
+    """Returns the IOC version number of the workbook. Returns None if not able to establish
+       the version."""
+    if _is_multilingual_wb(wb):
+        if wb.worksheets[0].cell(row=1, column=4).value == "IOC_14.1":
+            return "14.1"
+        elif wb.worksheets[0].cell(row=1, column=4).value == "Scientific Name 8.1":
+            return "8.1"
+        elif wb.worksheets[0].cell(row=1, column=1).value == "7.3":
+            return "7.3"
+        else:
+            return None
+    else:
+        return None
+
+
 def _is_complementary_wb(wb):
-    """True if 'wb' is an IOC Complementary Excel workbook, otherwise False."""
-    return "IOC" in wb.worksheets[0].title
+    """True if 'wb' is an IOC Complementary Excel workbook, otherwise False. These files are
+       normally named 'IOC_Names_File_Plus-N.M.xlxs, where N is the major version number and
+       M is the minor version number."""
+    sheet = wb.worksheets[0]
+    version = _complementary_wb_version(wb)
+    if version:
+        if version in ["7.3", "8.1"]:
+            if ((sheet.cell(row=1, column=4).value == "English name") and
+               (sheet.cell(row=1, column=5).value == "Counters")):
+                return True
+            else:
+                return False
+        elif version == "14.1":
+            if ((sheet.cell(row=1, column=6).value == "English name") and
+               (sheet.cell(row=1, column=7).value == "Counters")):
+                return True
+            else:
+                return False
+    else:
+        return False
+
+
+def _complementary_wb_version(wb):
+    """Returns the IOC version number of the workbook. Returns None if not able to establish
+       the version."""
+    if wb.worksheets[0].title == "IOC 7.3":
+        return "7.3"
+    elif wb.worksheets[0].title == "IOC 8.1":
+        return "8.1"
+    elif wb.worksheets[0].title == "14.1":
+        return "14.1"
+    else:
+        return None
 
 
 def sorted_ioc_files(filepaths):
@@ -68,7 +130,7 @@ def sorted_ioc_files(filepaths):
         try:
             wb = xlxs.load_workbook(path)
         except xlxs.InvalidFileException:
-            print("Error: '%s' is not an Excel file (.xlxs)." % (path))
+            print(f"Error: {path} is not an Excel file (.xlxs).")
             raise
         if _is_master_wb(wb):
             result.append(IocMasterFile(wb, path))
@@ -79,13 +141,7 @@ def sorted_ioc_files(filepaths):
         elif _is_complementary_wb(wb):
             result.append(IocComplementaryFile(wb, path))
         else:
-            msg = """Error: '%s' is not an recognized IOC file.
-An IOC Master file must have the title 'Master' in the first worksheet.
-An IOC Other Lists file must have the word 'vs_other_lists' in the title of the first worksheet.
-An IOC Multilingual file must have the word 'List' in the title of the first worksheet and
-'Sources' in the title of the second worksheet. An IOC Complementary file must have the word
-'IOC' in the first worksheet."""
-            print(msg % (path))
+            print(f"Error: {path} is not an recognized IOC file.")
             raise UnrecognizedIocFile(path)
     # Make sure we don't have multiple IOC files of the same type
     orders = [file.order for file in result]
@@ -115,13 +171,15 @@ class IocMasterFile (object):
                                   # which is a list of taxa, etc.
         self.index = {}           # This index contains all taxa keyed by name
         self.taxonomy_stats = {}
-        if self.workbook.worksheets[0].title == "Master":
-            s = self.workbook.worksheets[0].cell(row=1, column=2).value
-            regexp = re.compile (".*\((.*)\).*")
-            self.version = regexp.match (s).groups()[0]
+        if _is_master_wb(self.workbook):
+            self.version = self.version = _master_wb_version(self.workbook)
         else:
-            print("Error; '%s' is not a avalid IOC Master File" % (self.path))
+            print(f"Error: '{path}' is not a valid IOC Master File.\nAn IOC Master file must have the title 'Master' in the first worksheet.")
             raise InvalidIocMasterFile(self.path)
+        if self.version in ["8.1", "7.3"]:
+            self.column_shift = 0
+        elif self.version == "14.1":
+            self.column_shift = 1
 
     def read(self):
         """Read the taxonomy data into the attribute 'self.taxonomy' and
@@ -135,21 +193,21 @@ class IocMasterFile (object):
         ws = self.workbook.worksheets[0]
         for row in ws.iter_rows(min_row=5):
             infraclass = row[0].value
-            order = row[1].value
-            family = row[2].value
-            family_en = row[3].value
-            genus = row[4].value
-            species = row[5].value
-            subspecies = row[6].value
+            order = row[1+self.column_shift].value
+            family = row[2+self.column_shift].value
+            family_en = row[3+self.column_shift].value
+            genus = row[4+self.column_shift].value
+            species = row[5+self.column_shift].value
+            subspecies = row[6+self.column_shift].value
             taxon = {'other_classifications': [],  # Taxa in other lists which
                                                    # are equivalent to this taxon
-                     'authority': row[7].value,
-                     'common_names': {'en': row[8].value},
-                     'breeding_range': row[9].value,
-                     'breeding_subranges': row[10].value,
-                     'nonbreeding_range': row[11].value,
-                     'code': row[12].value,
-                     'comment': row[13].value,
+                     'authority': row[7+self.column_shift].value,
+                     'common_names': {'en': row[8+self.column_shift].value},
+                     'breeding_range': row[9+self.column_shift].value,
+                     'breeding_subranges': row[10+self.column_shift].value,
+                     'nonbreeding_range': row[11+self.column_shift].value,
+                     'code': row[12+self.column_shift].value,
+                     'comment': row[13+self.column_shift].value,
                      'subtaxa': []}
             if infraclass:
                 taxon['rank'] = "Infraclass"
@@ -235,7 +293,7 @@ class IocOtherListsFile (object):
             regexp = re.compile(".*\(v (.*)\).*")
             self.version = regexp.match(s).groups()[0]
         else:
-            print("Error; '%s' is not a valid IOC Other Lists File" % (self.path))
+            print(f"Error: '{path}' is not a valid IOC Other Lists File.\nAn IOC Other Lists file must have the word 'vs_other_lists' in the title of the first worksheet.")
             raise InvalidIocOtherListsFile(self.path)
 
     def read(self):
@@ -315,12 +373,10 @@ class IocMultilingualFile (object):
         self.taxonomy = {}          # This object contains taxa indexed by their
                                     # name
         self.taxonomy_stats = {}
-        if self.workbook.worksheets[0].title == "List" and self.workbook.worksheets[1].title == "Sources":
-            s = self.workbook.worksheets[1].cell(row=1, column=1).value
-            regexp = re.compile("[A-Za-z ]*(\d*\.\d*).*")
-            self.version = regexp.match(s).groups()[0]
+        if _is_multilingual_wb(self.workbook):
+            self.version = self.version = _multilingual_wb_version(self.workbook)
         else:
-            print("Error; '%s' is not a valid IOC Multilingual File" % (self.path))
+            print("Error: '{path}' is not a valid IOC Multilingual File.\nAn IOC Multilingual file must have the word 'List' in the title of the first worksheet and Sources' in the title of the second worksheet.")
             raise InvalidIocMultilingualFile(self.path)
 
     def read(self):
@@ -335,43 +391,96 @@ class IocMultilingualFile (object):
                                'species_count': 0,
                                'subspecies_count': 0}
         ws = self.workbook.worksheets[0]
-        i = 0
-        for row in ws.iter_rows(min_row=4):
-            if row[3].value and len(row[3].value.split()) == 2:
+        if self.version in ["8.1", "7.3"]:
+            i = 0
+            for row in ws.iter_rows(min_row=4):
+                if row[3].value and len(row[3].value.split()) == 2:
+                    name = row[3].value
+                    self.taxonomy_stats['species_count'] += 1
+                    i = 1
+                    entry = {'cat': row[6].value,
+                             'cze': row[9].value,
+                             'est': row[12].value,
+                             'ger': row[15].value,
+                             'ind': row[18].value,
+                             'lav': row[21].value,
+                             'pol': row[24].value,
+                             'slo': row[27].value,
+                             'swe': row[30].value}
+                elif i == 1:
+                    i = 2
+                    entry['eng'] = row[4].value
+                    entry['chi'] = row[7].value
+                    entry['dan'] = row[10].value
+                    entry['fin'] = row[13].value
+                    entry['hun'] = row[16].value
+                    entry['ita'] = row[19].value
+                    entry['lit'] = row[22].value
+                    entry['por'] = row[25].value
+                    entry['slv'] = row[28].value
+                elif i == 2:
+                    i = 0
+                    entry['lzh'] = row[8].value
+                    entry['dut'] = row[11].value
+                    entry['fre'] = row[14].value
+                    entry['ice'] = row[17].value
+                    entry['jpn'] = row[20].value
+                    entry['nno'] = row[23].value
+                    entry['rus'] = row[26].value
+                    entry['spa'] = row[29].value
+                    self.taxonomy[name] = entry
+        else:  # self.version == "14.1"
+            # We use IETF BCP 47 language codes. There is a Python module 'langcodes' that can be
+            # used to work with them. E.g: `langcodes.get("zh-Hant").display_name()` will return
+            # 'Chinese (Traditional)'.
+            for row in ws.iter_rows(min_row=2):
                 name = row[3].value
-                self.taxonomy_stats['species_count'] += 1
-                i = 1
-                entry = {'cat': row[6].value,
-                         'cze': row[9].value,
-                         'est': row[12].value,
-                         'ger': row[15].value,
-                         'ind': row[18].value,
-                         'lav': row[21].value,
-                         'pol': row[24].value,
-                         'slo': row[27].value,
-                         'swe': row[30].value}
-            elif i == 1:
-                i = 2
-                entry['eng'] = row[4].value
-                entry['chi'] = row[7].value
-                entry['dan'] = row[10].value
-                entry['fin'] = row[13].value
-                entry['hun'] = row[16].value
-                entry['ita'] = row[19].value
-                entry['lit'] = row[22].value
-                entry['por'] = row[25].value
-                entry['slv'] = row[28].value
-            elif i == 2:
-                i = 0
-                entry['lzh'] = row[8].value
-                entry['dut'] = row[11].value
-                entry['fre'] = row[14].value
-                entry['ice'] = row[17].value
-                entry['jpn'] = row[20].value
-                entry['nno'] = row[23].value
-                entry['rus'] = row[26].value
-                entry['spa'] = row[29].value
+                entry = {'en': row[4].value,
+                         'ca': row[5].value,
+                         'zh-Hans': row[6].value,
+                         'zh-Hant': row[7].value,
+                         'hr': row[8].value,
+                         'cs': row[9].value,
+                         'da': row[10].value,
+                         'nl': row[11].value,
+                         'fi': row[12].value,
+                         'fr': row[13].value,
+                         'de': row[14].value,
+                         'it': row[15].value,
+                         'ja': row[16].value,
+                         'lt': row[17].value,
+                         'no': row[18].value,
+                         'pl': row[19].value,
+                         'pt-br': row[20].value,
+                         'pt': row[21].value,
+                         'ru': row[22].value,
+                         'sr': row[23].value,
+                         'sk': row[24].value,
+                         'es': row[25].value,
+                         'sv': row[26].value,
+                         'tr': row[27].value,
+                         'uk': row[28].value,
+                         'af': row[29].value,
+                         'ar': row[30].value,
+                         'be': row[31].value,
+                         'bg': row[32].value,
+                         'et': row[33].value,
+                         'el': row[34].value,
+                         'he': row[35].value,
+                         'hu': row[36].value,
+                         'is': row[37].value,
+                         'id': row[38].value,
+                         'ko': row[39].value,
+                         'lv': row[40].value,
+                         'mk': row[41].value,
+                         'ml': row[42].value,
+                         'se': row[43].value,
+                         'fa': row[44].value,
+                         'ro': row[45].value,
+                         'sl': row[46].value,
+                         'th': row[47].value}
                 self.taxonomy[name] = entry
+                self.taxonomy_stats['species_count'] += 1
 
 
 class IocComplementaryFile (object):
@@ -385,12 +494,15 @@ class IocComplementaryFile (object):
         self.version = None
         self.taxonomy = {}          # This object contains taxa indexed by their name
         self.taxonomy_stats = {}
-        if "IOC" in self.workbook.worksheets[0].title:
-            s = self.workbook.worksheets[0].title
-            regexp = re.compile("[A-Za-z ]*(\d*\.\d*).*")
-            self.version = regexp.match (s).groups()[0]
+        if _is_complementary_wb(self.workbook):
+
+            self.version = _complementary_wb_version(self.workbook)
+            if self.version in ["8.1", "7.3"]:
+                self.column_shift = 0
+            elif self.version == "14.1":
+                self.column_shift = 1
         else:
-            print("Error; '%s' is not a valid IOC Complementary File" % (self.path))
+            print(f"Error: '{path}' is not a valid IOC Complementary File.\nThe first worksheet title of an IOC Complementary file must be 'IOC 7.3', 'IOC 8.1' or '14.1'.")
             raise InvalidIocComplementaryFile(self.path)
 
     def read(self):
