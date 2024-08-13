@@ -67,7 +67,7 @@ def write_taxonomy_to_files(iocwbl, verbose):
     if verbose:
         print("Writing to files ...")
     if os.path.exists(p):
-        print("Error: Directory '%s' already exists." % (p))
+        print(f"Error: Directory '{p}' already exists.")
         sys.exit(ERROR_DATA_DIR_EXISTS_ALREADY)
     else:
         os.makedirs(p)
@@ -158,19 +158,20 @@ def print_to_stdout(iocwbl, verbose):
 def print_taxonomy_info(iocwbl, verbose):
     """Print info on IOC taxonomy to stdout."""
     print("Taxonomy statistics:")
-    print("  Taxonomy: IOC %s" % (iocwbl.version))
-    print("  Infraclasses: %d" % (iocwbl.stats['infraclass_count']))
-    print("  Orders: %d" % (iocwbl.stats['order_count']))
-    print("  Families: %d" % (iocwbl.stats['family_count']))
-    print("  Genus: %d" % (iocwbl.stats['genus_count']))
-    print("  Species: %d" % (iocwbl.stats['species_count']))
-    print("  Subspecies: %d" % (iocwbl.stats['subspecies_count']))
-    print("  Total number of taxa: %d" % (iocwbl.stats['infraclass_count'] +
-                                          iocwbl.stats['family_count'] +
-                                          iocwbl.stats['order_count'] +
-                                          iocwbl.stats['genus_count'] +
-                                          iocwbl.stats['species_count'] +
-                                          iocwbl.stats['subspecies_count']))
+    print(f"  Taxonomy: IOC {iocwbl.version}")
+    print(f"  Infraclasses: {iocwbl.stats['infraclass_count']}")
+    print(f"  Orders: {iocwbl.stats['order_count']}")
+    print(f"  Families: {iocwbl.stats['family_count']}")
+    print(f"  Genus: {iocwbl.stats['genus_count']}")
+    print(f"  Species: {iocwbl.stats['species_count']}")
+    print(f"  Subspecies: {iocwbl.stats['subspecies_count']}")
+    count = iocwbl.stats['infraclass_count'] + \
+            iocwbl.stats['family_count'] + \
+            iocwbl.stats['order_count'] + \
+            iocwbl.stats['genus_count'] + \
+            iocwbl.stats['species_count'] + \
+            iocwbl.stats['subspecies_count']
+    print(f"  Total number of taxa: {count}")
 
 
 def handle_files(filepaths, write, info, verbose, dry_run):
