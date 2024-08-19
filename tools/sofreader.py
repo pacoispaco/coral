@@ -22,94 +22,6 @@ DEFAULT_SOF_TAXONOMY_DIR = "sof"
 VERSION_FILE_NAME = "version.json"
 
 
-class SofWbl(object):
-    """Representation of IOC World Bird List"""
-
-    def __init__(self):
-        self.taxonomy = []
-        self.index = {}
-        self.version = None
-        self.stats = {'order_count': 0,
-                      'family_count': 0,
-                      'species_count': 0}
-
-
-def write_taxon_to_file(directory, taxon):
-    """Write the JSON representation of 'taxon' to file."""
-    for subtaxon in taxon['subtaxa']:
-        write_taxon_to_file(directory, subtaxon)
-    if taxon['rank'] == "Species":
-        fname = taxon['binomial_name'].replace(" ", "_") + ".json"
-    else:  # Order or family
-        fname = taxon['name'] + ".json"
-    subtaxa_files = []
-    for subtaxon in taxon['subtaxa']:
-        if subtaxon['rank'] == "Species":
-            subtaxa_files.append(subtaxon['binomial_name'].replace(" ", "_"))
-        else:  # Order or family
-            subtaxa_files.append(subtaxon['name'] + ".json")
-    taxon['subtaxa'] = subtaxa_files
-    f = open(os.path.join(directory, fname), 'w')
-    f.write(json.dumps(taxon))
-    f.close()
-
-
-def write_taxonomy_to_files(sofwbl, verbose):
-    """Write JSON representations of the taxa in SOF taxonomy to files."""
-    p = os.path.join(DEFAULT_DATA_DIR, DEFAULT_SOF_TAXONOMY_DIR)
-    if verbose:
-        print("Writing to files ...")
-    if os.path.exists(p):
-        print("Error: Directory '%s' already exists." % (p))
-        sys.exit(ERROR_DATA_DIR_EXISTS_ALREADY)
-    else:
-        os.makedirs(p)
-    f = open(os.path.join(p, VERSION_FILE_NAME), 'w')
-    v = {"version": sofwbl.version}
-    f.write(json.dumps(v))
-    f.close()
-    for taxon in sofwbl.taxonomy:
-        write_taxon_to_file(p, taxon)
-
-
-def load_sof_subtaxa(sofwbl, taxon, sof_dir):
-    """Load the subtaxa for the given taxon."""
-    i = 0
-    for name in taxon['subtaxa']:
-        f = open(os.path.join(sof_dir, name))
-        t = json.load(f)
-        f.close()
-        taxon['subtaxa'][i] = t
-        if t['rank'] == "Order":
-            sofwbl.stats['order_count'] += 1
-        elif t['rank'] == "Family":
-            sofwbl.stats['family_count'] += 1
-        elif t['rank'] == "Species":
-            sofwbl.stats['species_count'] += 1
-        load_sof_subtaxa(sofwbl, t, sof_dir)
-        i += 1
-
-
-def load_sof_taxonomy(sofwbl, sof_dir, verbose):
-    """Load SOF taxonomy from files."""
-    # Read version
-    p = os.path.join(DEFAULT_DATA_DIR, DEFAULT_SOF_TAXONOMY_DIR)
-    f = open(os.path.join(p, VERSION_FILE_NAME))
-    sofwbl.version = json.load(f)["version"]
-    f.close()
-    # Read orders:
-    p = os.popen("grep -l '\"rank\": \"Order\"' %s/*.json" % (sof_dir))
-    filenames = p.read().split()
-    p.close()
-    for fname in filenames:
-        f = open(fname)
-        taxon = json.load(f)
-        f.close()
-        sofwbl.taxonomy.append(taxon)
-        load_sof_subtaxa(sofwbl, taxon, sof_dir)
-        sofwbl.stats['order_count'] += 1
-
-
 def print_to_stdout(sofwbl, verbose):
     """Print JSON representations to stdout."""
     if verbose:
@@ -138,25 +50,28 @@ def handle_files(filepath, write, info, verbose, dry_run):
         print("Dry-run: No taxonomy information will be written to files or to stdout")
     if verbose:
         print(f"SOF file: {filepath}")
-    sofwbl = SofWbl()
     sof_file = soffiles.sof_file(filepath)
 
     if verbose:
         print(f"Reading SOF Master File '{sof_file.path}' ...")
         print(f"SOF Version: {sof_file.version}")
         sof_file.read()
-        sofwbl.taxonomy = sof_file.taxonomy
-        sofwbl.index = sof_file.index
-        sofwbl.stats = sof_file.taxonomy_stats
-        sofwbl.version = sof_file.version
 
     if not dry_run:
         if write:
-            write_taxonomy_to_files(sofwbl, verbose)
+            p = os.path.join(DEFAULT_DATA_DIR, DEFAULT_SOF_TAXONOMY_DIR)
+            if os.path.exists(p):
+                print("Error: Directory '%s' already exists." % (p))
+                sys.exit(ERROR_DATA_DIR_EXISTS_ALREADY)
+            else:
+                if verbose:
+                    print("Writing files ...")
+                os.makedirs(p)
+                sof_file.sofwbl.write_to_files(p, VERSION_FILE_NAME)
         else:
-            print_to_stdout(sofwbl, verbose)
+            print_to_stdout(sof_file.sofwbl, verbose)
     if info:
-        print_taxonomy_info(sofwbl, verbose)
+        print_taxonomy_info(sof_file.sofwbl, verbose)
 
 
 def main():

@@ -9,6 +9,11 @@ import openpyxl.reader.excel as xlxs
 import re
 
 
+VERSION_FILE_NAME = "version.py"
+
+
+# Exceptions
+
 class InvalidSofFile (Exception):
     pass
 
@@ -20,6 +25,8 @@ class UnrecognizedSofFile (Exception):
 class UnrecognizedTaxon (Exception):
     pass
 
+
+# Utility functions
 
 def _is_sof_names_wb(wb):
     """True if 'wb' is an SOF Swedish Names Excel workbook, otherwise False."""
@@ -35,23 +42,48 @@ def _sof_wb_version(wb):
         return None
 
 
-def sof_file(filepath):
-    """Returns a SOF File Names class instance, based om `filepath`."""
-    result = None
-    try:
-        # The values of the cells in the second column titled 'Nivå' are formulas. We want those to
-        # be evaluated, so we set `data_only=True` to get the evaluated values, and not the formula
-        # itself. See: https://openpyxl.readthedocs.io/en/stable/api/openpyxl.reader.excel.html
-        wb = xlxs.load_workbook(filepath, data_only=True)
-    except xlxs.InvalidFileException:
-        print(f"Error: {filepath} is not an Excel file (.xlxs).")
-        raise
-    if _is_sof_names_wb(wb):
-        result = SofNamesFile(wb, filepath)
-    else:
-        print(f"Error: {filepath} is not an recognized IOC file.")
-        raise UnrecognizedSofFile(filepath)
-    return result
+# Classes
+
+class SofWbl(object):
+    """Representation of IOC World Bird List"""
+
+    def __init__(self):
+        self.taxonomy = []
+        self.index = {}
+        self.version = None
+        self.stats = {'order_count': 0,
+                      'family_count': 0,
+                      'species_count': 0}
+
+    def _write_taxon_to_file(self, directory, taxon):
+        """Write the JSON representation of 'taxon' to file."""
+        for subtaxon in taxon['subtaxa']:
+            self._write_taxon_to_file(directory, subtaxon)
+        if taxon['rank'] == "Species":
+            fname = taxon['binomial_name'].replace(" ", "_") + ".json"
+        else:  # Order or family
+            fname = taxon['name'] + ".json"
+        subtaxa_files = []
+        for subtaxon in taxon['subtaxa']:
+            if subtaxon['rank'] == "Species":
+                subtaxa_files.append(subtaxon['binomial_name'].replace(" ", "_"))
+            else:  # Order or family
+                subtaxa_files.append(subtaxon['name'] + ".json")
+        taxon['subtaxa'] = subtaxa_files
+        f = open(os.path.join(directory, fname), 'w')
+        f.write(json.dumps(taxon))
+        f.close()
+
+    def write_to_files(self, dirpath, version_file_name=VERSION_FILE_NAME):
+        """Write JSON representations of the taxa in SOF taxonomy to files in the directory
+           `dirpath`."""
+        assert os.path.exists(dirpath)
+        f = open(os.path.join(dirpath, version_file_name), 'w')
+        v = {"version": self.version}
+        f.write(json.dumps(v))
+        f.close()
+        for taxon in self.taxonomy:
+            self._write_taxon_to_file(dirpath, taxon)
 
 
 class SofNamesFile (object):
@@ -59,15 +91,9 @@ class SofNamesFile (object):
 
     def __init__(self, workbook, path):
         """Initialize with Excel 'workbook'."""
-        self.order = 1
         self.workbook = workbook
         self.path = path
-        self.version = None
-        self.taxonomy = []        # This list contains the list of top level
-                                  # taxa. Each taxa has a 'subtaxa' attribute
-                                  # which is a list of taxa, etc.
-        self.index = {}           # This index contains all taxa keyed by name
-        self.taxonomy_stats = {}
+        self.sofwbl = SofWbl()
         if _is_sof_names_wb(self.workbook):
             self.version = self.version = _sof_wb_version(self.workbook)
         else:
@@ -77,9 +103,6 @@ class SofNamesFile (object):
     def read(self):
         """Read the taxonomy names data into the attribute 'self.taxonomy' and
            save statistics in the attribute 'self.taxonomy_stats'."""
-        self.taxonomy_stats = {'order_count': 0,
-                               'family_count': 0,
-                               'species_count': 0}
         ws = self.workbook.worksheets[0]
         # First we read all the taxa
         i = 1
@@ -89,16 +112,16 @@ class SofNamesFile (object):
         for row in ws.iter_rows(min_row=2):
             if not parsing_notes:
                 if row[1].value == "ordning":
-                    self.taxonomy_stats['order_count'] += 1
+                    self.sofwbl.stats['order_count'] += 1
                     order = row[2].value
                     taxon = {'rank': 'Order',
                              'name': order,
                              'notes': str(row[5].value).split(),
                              'common_names': {'sv': row[4].value},
                              'subtaxa': []}
-                    self.taxonomy.append(taxon)
+                    self.sofwbl.taxonomy.append(taxon)
                 elif row[1].value == "familj":
-                    self.taxonomy_stats['family_count'] += 1
+                    self.sofwbl.stats['family_count'] += 1
                     family = row[2].value
                     taxon = {'rank': 'Family',
                              'name': family,
@@ -106,10 +129,10 @@ class SofNamesFile (object):
                              'common_names': {'en': row[3].value,
                                               'sv': row[4].value},
                              'subtaxa': []}
-                    taxon['supertaxon'] = self.taxonomy[-1]['name']
-                    self.taxonomy[-1]['subtaxa'].append(taxon)
+                    taxon['supertaxon'] = self.sofwbl.taxonomy[-1]['name']
+                    self.sofwbl.taxonomy[-1]['subtaxa'].append(taxon)
                 elif row[1].value == "art":
-                    self.taxonomy_stats['species_count'] += 1
+                    self.sofwbl.stats['species_count'] += 1
                     print(row[2].value)
                     taxon = {'rank': 'Species',
                              'binomial_name': row[2].value,
@@ -118,8 +141,8 @@ class SofNamesFile (object):
                              'common_names': {'en': row[3].value,
                                               'sv': row[4].value},
                              'subtaxa': []}
-                    taxon['supertaxon'] = self.taxonomy[-1]['subtaxa'][-1]['name']
-                    self.taxonomy[-1]['subtaxa'][-1]['subtaxa'].append(taxon)
+                    taxon['supertaxon'] = self.sofwbl.taxonomy[-1]['subtaxa'][-1]['name']
+                    self.sofwbl.taxonomy[-1]['subtaxa'][-1]['subtaxa'].append(taxon)
                 elif row[1].value is None:
                     parsing_notes = True
                 else:
@@ -144,53 +167,57 @@ class SofNamesFile (object):
             taxon['notes'] = x
 
 
-class IocData (object):
-    """Represents all IOC data and the entire IOC taxonomic hierarchy. The top
-       level taxa are available in the attribute 'top_taxa'. ALl other taxa can
-       be retrieved by name with the feature 'taxon'."""
-
-    def __init__(self, directory):
-        """Initialize with the specified 'directory'."""
-        assert os.path.exists(directory)
-        assert os.path.isdir(directory)
-        self.directory = directory
-        self.top_taxa = self.__top_taxa__()
-
-    def __top_taxa__(self):
-        """A list of the top IocTaxon in IOC. These IocTaxa have the rank
-           "Infraclass"."""
-        result = []
-        for name in TOP_TAXA_NAMES:
-            result.append(IocTaxon(name))
-        return result
-
-    def taxon(self, name):
-        """Return the IocTaxon with the given 'name'. Returns None if there is
-           no such IocTaxon."""
-        t = IocTaxon(name, self.directory)
-        if t.exists:
-            return t
-        else:
-            return None
+def sof_file(filepath):
+    """Returns a SOF File Names class instance, based om `filepath`."""
+    result = None
+    try:
+        # The values of the cells in the second column titled 'Nivå' are formulas. We want those to
+        # be evaluated, so we set `data_only=True` to get the evaluated values, and not the formula
+        # itself. See: https://openpyxl.readthedocs.io/en/stable/api/openpyxl.reader.excel.html
+        wb = xlxs.load_workbook(filepath, data_only=True)
+    except xlxs.InvalidFileException:
+        print(f"Error: {filepath} is not an Excel file (.xlxs).")
+        raise
+    if _is_sof_names_wb(wb):
+        result = SofNamesFile(wb, filepath)
+    else:
+        print(f"Error: {filepath} is not an recognized IOC file.")
+        raise UnrecognizedSofFile(filepath)
+    return result
 
 
-class IocTaxon (object):
-    """Represents an IOC taxon as transformed from the Excel data in the IOC
-       Master file, Complementary file, Multilingual file and Other Lists
-       file. All data for the taxon is available in the attribute 'data'."""
+def load_sof_subtaxa(sofwbl, taxon, dirpath):
+    """Load the subtaxa for the given taxon."""
+    i = 0
+    for name in taxon['subtaxa']:
+        f = open(os.path.join(dirpath, name))
+        t = json.load(f)
+        f.close()
+        taxon['subtaxa'][i] = t
+        if t['rank'] == "Order":
+            sofwbl.stats['order_count'] += 1
+        elif t['rank'] == "Family":
+            sofwbl.stats['family_count'] += 1
+        elif t['rank'] == "Species":
+            sofwbl.stats['species_count'] += 1
+        load_sof_subtaxa(sofwbl, t, dirpath)
+        i += 1
 
-    def __init__(self, name, directory):
-        """Initialize with the name, that can be a binomial species or a
-           trinomial subspecies name."""
-        self.data = {'name': name}
-        self.filename = os.path.join(directory, name + '.json')
-        self.exists = os.path.exists(self.filename)
-        self.__load__()
 
-    def __load__(self):
-        """Load from JSON file."""
-        if self.exists:
-            fname = self.data['name'] + '.json'
-            f = open(fname)
-            self.data = json.load(f)
-            f.close()
+def load_sof_taxonomy(sofwbl, dirpath, version_file_name=VERSION_FILE_NAME):
+    """Load SOF taxonomy from files in the directory `dirpath`."""
+    # Read version
+    f = open(os.path.join(dirpath, version_file_name))
+    sofwbl.version = json.load(f)["version"]
+    f.close()
+    # Read orders:
+    p = os.popen("grep -l '\"rank\": \"Order\"' %s/*.json" % (dirpath))
+    filenames = p.read().split()
+    p.close()
+    for fname in filenames:
+        f = open(fname)
+        taxon = json.load(f)
+        f.close()
+        sofwbl.taxonomy.append(taxon)
+        load_sof_subtaxa(sofwbl, taxon, dirpath)
+        sofwbl.stats['order_count'] += 1
