@@ -50,13 +50,14 @@ def handle_files(filepath, write, info, verbose, dry_run):
         print("Dry-run: No taxonomy information will be written to files or to stdout")
     if verbose:
         print(f"SOF file: {filepath}")
-    sof_file = soffiles.sof_file(filepath)
+    sof_file = soffiles.SofNamesFile(filepath)
 
     if verbose:
         print(f"Reading SOF Master File '{sof_file.path}' ...")
         print(f"SOF Version: {sof_file.version}")
-        sof_file.read()
+    sof_file.read()
 
+    sofwbl = sof_file.sofwbl
     if not dry_run:
         if write:
             p = os.path.join(DEFAULT_DATA_DIR, DEFAULT_SOF_TAXONOMY_DIR)
@@ -67,11 +68,11 @@ def handle_files(filepath, write, info, verbose, dry_run):
                 if verbose:
                     print("Writing files ...")
                 os.makedirs(p)
-                sof_file.sofwbl.write_to_files(p, VERSION_FILE_NAME)
+                sofwbl.write_to_files(p, VERSION_FILE_NAME)
         else:
-            print_to_stdout(sof_file.sofwbl, verbose)
+            print_to_stdout(sofwbl, verbose)
     if info:
-        print_taxonomy_info(sof_file.sofwbl, verbose)
+        print_taxonomy_info(sofwbl, verbose)
 
 
 def main():

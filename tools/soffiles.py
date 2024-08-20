@@ -18,6 +18,10 @@ class InvalidSofFile (Exception):
     pass
 
 
+class SofWblDirectoryNotFound(Exception):
+    pass
+
+
 class UnrecognizedSofFile (Exception):
     pass
 
@@ -26,34 +30,29 @@ class UnrecognizedTaxon (Exception):
     pass
 
 
-# Utility functions
-
-def _is_sof_names_wb(wb):
-    """True if 'wb' is an SOF Swedish Names Excel workbook, otherwise False."""
-    return wb.worksheets[0].title[0:2] == "NL"
-
-
-def _sof_wb_version(wb):
-    """Returns the SOF version number of the workbook. Returns None if not able to establish
-       the version."""
-    if _is_sof_names_wb(wb):
-        return wb.worksheets[0].title[2:].strip()
-    else:
-        return None
-
-
 # Classes
 
 class SofWbl(object):
     """Representation of IOC World Bird List"""
 
-    def __init__(self):
+    def __init__(self, dirpath=None):
+        """Initailize the SOF World Bird List. If `dirpath`is None, and empty object will be
+           created. If `dirpath` is not None, it will try to read the SOF World Bird List 
+           JSON-files from there. That assumes that the SOF Name List file has been read and
+           the corresponding SOF World Bird List JSON-files have been created at an earlier
+           point in time."""
         self.taxonomy = []
         self.index = {}
         self.version = None
         self.stats = {'order_count': 0,
                       'family_count': 0,
                       'species_count': 0}
+        if dirpath:
+            if os.path.exists(dirpath):
+                self.load_taxonomy(dirpath, version_file_name=VERSION_FILE_NAME)
+            else:
+                print(f"Error: SOF World Bird List directory {dirpath} not found.")
+                raise SofWblDirectoryNotFound(dirpath)
 
     def _write_taxon_to_file(self, directory, taxon):
         """Write the JSON representation of 'taxon' to file."""
@@ -128,16 +127,39 @@ class SofWbl(object):
 class SofNamesFile (object):
     """Represents a SOF Names Master file (Excel)."""
 
-    def __init__(self, workbook, path):
-        """Initialize with Excel 'workbook'."""
-        self.workbook = workbook
-        self.path = path
-        self.sofwbl = SofWbl()
-        if _is_sof_names_wb(self.workbook):
-            self.version = self.version = _sof_wb_version(self.workbook)
+    def __init__(self, filepath):
+        """Initialize with Excel file `filepath`. This will not read the contents of the file."""
+        # Check that it is an Excel-file.
+        try:
+            # The values of the cells in the second column titled 'Nivå' are formulas. We want those
+            # to be evaluated, so we set `data_only=True` to get the evaluated values, and not the
+            # formula itself.
+            # See: https://openpyxl.readthedocs.io/en/stable/api/openpyxl.reader.excel.html
+            wb = xlxs.load_workbook(filepath, data_only=True)
+        except xlxs.InvalidFileException:
+            print(f"Error: {filepath} is not an Excel file (.xlxs).")
+            raise
+        # Check that it is a SOF Names file, and if so initialize it.
+        if self._is_sof_names_wb(wb):
+            self.workbook = wb
+            self.path = filepath
+            self.sofwbl = SofWbl()
+            self.version = self._sof_wb_version(self.workbook)
         else:
-            print(f"Error: '{path}' is not a valid SOF Names File.\nA SOF Names file must have the text 'NL' in the title of the first worksheet.")
+            print(f"Error: '{filepath}' is not a valid SOF Names File.\nA SOF Names file must have the text 'NL' in the title of the first worksheet.")
             raise InvalidSofFile(self.path)
+
+    def _is_sof_names_wb(self, wb):
+        """True if 'wb' is an SOF Swedish Names Excel workbook, otherwise False."""
+        return wb.worksheets[0].title[0:2] == "NL"
+
+    def _sof_wb_version(self, wb):
+        """Returns the SOF version number of the workbook. Returns None if not able to establish
+           the version."""
+        if self._is_sof_names_wb(wb):
+            return wb.worksheets[0].title[2:].strip()
+        else:
+            return None
 
     def read(self):
         """Read the taxonomy names data into the attribute 'self.taxonomy' and
@@ -204,31 +226,3 @@ class SofNamesFile (object):
             for noteid in taxon['notes']:
                 x.append(notes[noteid])
             taxon['notes'] = x
-
-
-def sof_file(filepath):
-    """Returns a SOF File Names class instance, based om `filepath`."""
-    result = None
-    try:
-        # The values of the cells in the second column titled 'Nivå' are formulas. We want those to
-        # be evaluated, so we set `data_only=True` to get the evaluated values, and not the formula
-        # itself. See: https://openpyxl.readthedocs.io/en/stable/api/openpyxl.reader.excel.html
-        wb = xlxs.load_workbook(filepath, data_only=True)
-    except xlxs.InvalidFileException:
-        print(f"Error: {filepath} is not an Excel file (.xlxs).")
-        raise
-    if _is_sof_names_wb(wb):
-        result = SofNamesFile(wb, filepath)
-    else:
-        print(f"Error: {filepath} is not an recognized IOC file.")
-        raise UnrecognizedSofFile(filepath)
-    return result
-
-
-def sof_wbl(dirpath, version_file_name=VERSION_FILE_NAME):
-    """Returns a SofWbl class with the entire taxonomy loaded from the file sin the directory
-       `dirpath`."""
-    assert os.path.exists(dirpath)
-    sofwbl = SofWbl()
-    sofwbl.load_taxonomy(dirpath, version_file_name=VERSION_FILE_NAME)
-    return sofwbl
