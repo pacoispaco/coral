@@ -9,7 +9,7 @@ import openpyxl.reader.excel as xlxs
 import re
 
 
-VERSION_FILE_NAME = "version.py"
+VERSION_FILE_NAME = "version.json"
 
 
 # Exceptions
@@ -66,7 +66,7 @@ class SofWbl(object):
         subtaxa_files = []
         for subtaxon in taxon['subtaxa']:
             if subtaxon['rank'] == "Species":
-                subtaxa_files.append(subtaxon['binomial_name'].replace(" ", "_"))
+                subtaxa_files.append(subtaxon['binomial_name'].replace(" ", "_") + ".json")
             else:  # Order or family
                 subtaxa_files.append(subtaxon['name'] + ".json")
         taxon['subtaxa'] = subtaxa_files
@@ -84,6 +84,45 @@ class SofWbl(object):
         f.close()
         for taxon in self.taxonomy:
             self._write_taxon_to_file(dirpath, taxon)
+
+    def _load_subtaxa(self, taxon, dirpath):
+        """Load the subtaxa for the given taxon."""
+        i = 0
+        for name in taxon['subtaxa']:
+            f = open(os.path.join(dirpath, name))
+            t = json.load(f)
+            f.close()
+            taxon['subtaxa'][i] = t
+            if t['rank'] == "Order":
+                self.index[t['name']] = t
+                self.stats['order_count'] += 1
+            elif t['rank'] == "Family":
+                self.index[t['name']] = t
+                self.stats['family_count'] += 1
+            elif t['rank'] == "Species":
+                self.index[t['binomial_name']] = t
+                self.stats['species_count'] += 1
+            self._load_subtaxa(t, dirpath)
+            i += 1
+
+    def load_taxonomy(self, dirpath, version_file_name=VERSION_FILE_NAME):
+        """Load SOF taxonomy from files in the directory `dirpath`."""
+        # Read version
+        f = open(os.path.join(dirpath, version_file_name))
+        self.version = json.load(f)["version"]
+        f.close()
+        # Read orders:
+        p = os.popen("grep -l '\"rank\": \"Order\"' %s/*.json" % (dirpath))
+        filenames = p.read().split()
+        p.close()
+        for fname in filenames:
+            f = open(fname)
+            taxon = json.load(f)
+            f.close()
+            self.index[taxon['name']] = taxon
+            self.taxonomy.append(taxon)
+            self._load_subtaxa(taxon, dirpath)
+            self.stats['order_count'] += 1
 
 
 class SofNamesFile (object):
@@ -186,38 +225,10 @@ def sof_file(filepath):
     return result
 
 
-def load_sof_subtaxa(sofwbl, taxon, dirpath):
-    """Load the subtaxa for the given taxon."""
-    i = 0
-    for name in taxon['subtaxa']:
-        f = open(os.path.join(dirpath, name))
-        t = json.load(f)
-        f.close()
-        taxon['subtaxa'][i] = t
-        if t['rank'] == "Order":
-            sofwbl.stats['order_count'] += 1
-        elif t['rank'] == "Family":
-            sofwbl.stats['family_count'] += 1
-        elif t['rank'] == "Species":
-            sofwbl.stats['species_count'] += 1
-        load_sof_subtaxa(sofwbl, t, dirpath)
-        i += 1
-
-
-def load_sof_taxonomy(sofwbl, dirpath, version_file_name=VERSION_FILE_NAME):
-    """Load SOF taxonomy from files in the directory `dirpath`."""
-    # Read version
-    f = open(os.path.join(dirpath, version_file_name))
-    sofwbl.version = json.load(f)["version"]
-    f.close()
-    # Read orders:
-    p = os.popen("grep -l '\"rank\": \"Order\"' %s/*.json" % (dirpath))
-    filenames = p.read().split()
-    p.close()
-    for fname in filenames:
-        f = open(fname)
-        taxon = json.load(f)
-        f.close()
-        sofwbl.taxonomy.append(taxon)
-        load_sof_subtaxa(sofwbl, taxon, dirpath)
-        sofwbl.stats['order_count'] += 1
+def sof_wbl(dirpath, version_file_name=VERSION_FILE_NAME):
+    """Returns a SofWbl class with the entire taxonomy loaded from the file sin the directory
+       `dirpath`."""
+    assert os.path.exists(dirpath)
+    sofwbl = SofWbl()
+    sofwbl.load_taxonomy(dirpath, version_file_name=VERSION_FILE_NAME)
+    return sofwbl
