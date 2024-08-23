@@ -3,12 +3,18 @@
 """This module contains methods and classes for reading IOC files."""
 
 import json
-import os, os.path
+import os
+import os.path
 import openpyxl.reader.excel as xlxs
 import re
 
 # Constants: top taxa names in IOC
 TOP_TAXA_NAMES = ["NEOAVES", "NEOGNATHAE", "PALEOGNATHAE"]
+
+# Directory and file name constants
+DEFAULT_DATA_DIR = "./gendata"
+DEFAULT_IOC_TAXONOMY_DIR = "ioc"
+VERSION_FILE_NAME = "version.json"
 
 
 class InvalidIocMasterFile (Exception):
@@ -39,147 +45,156 @@ class MultipleVersionsOfIocFiles (Exception):
     pass
 
 
-def _is_master_wb(wb):
-    """True if 'wb' is an IOC Masterfile Excel workbook, otherwise False."""
-    return wb.worksheets[0].title == "Master"
+class IocWblDirectoryNotFound(Exception):
+    pass
 
 
-def _master_wb_version(wb):
-    """Returns the IOC version number of the workbook. Returns None if not able to establish
-       the version."""
-    if _is_master_wb(wb):
-        if wb.worksheets[0].cell(row=1, column=2).value:
-            version_string = wb.worksheets[0].cell(row=1, column=2).value
-        elif wb.worksheets[0].cell(row=1, column=3).value:
-            version_string = wb.worksheets[0].cell(row=1, column=3).value
-        regexp = re.compile("IOC WORLD BIRD LIST \((.*)\)")
-        mo = regexp.search(version_string)
-        return mo[1]
-    else:
-        return None
+class IocWbl(object):
+    """Representation of IOC World Bird List"""
 
-
-def _is_other_lists_wb(wb):
-    """True if 'wb' is an IOC Other Lists Excel workbook, otherwise False."""
-    return "vs_other_lists" in wb.worksheets[0].title
-
-
-def _is_multilingual_wb(wb):
-    """True if 'wb' is an IOC Multilingual Excel workbook, otherwise False."""
-    return wb.worksheets[0].title == "List" and wb.worksheets[1].title == "Sources"
-
-
-def _multilingual_wb_version(wb):
-    """Returns the IOC version number of the workbook. Returns None if not able to establish
-       the version."""
-    if _is_multilingual_wb(wb):
-        if wb.worksheets[0].cell(row=1, column=4).value == "IOC_14.1":
-            return "14.1"
-        elif wb.worksheets[0].cell(row=1, column=4).value == "Scientific Name 8.1":
-            return "8.1"
-        elif wb.worksheets[0].cell(row=1, column=1).value == "7.3":
-            return "7.3"
-        else:
-            return None
-    else:
-        return None
-
-
-def _is_complementary_wb(wb):
-    """True if 'wb' is an IOC Complementary Excel workbook, otherwise False. These files are
-       normally named 'IOC_Names_File_Plus-N.M.xlxs, where N is the major version number and
-       M is the minor version number."""
-    sheet = wb.worksheets[0]
-    version = _complementary_wb_version(wb)
-    if version:
-        if version in ["7.3", "8.1"]:
-            if ((sheet.cell(row=1, column=4).value == "English name") and
-               (sheet.cell(row=1, column=5).value == "Counters")):
-                return True
+    def __init__(self, dirpath=None):
+        """Initailize the IOC World Bird List. If `dirpath`is None, and empty object will be
+           created. If `dirpath` is not None, it will try to read the IOC World Bird List
+           JSON-files from there. That assumes that the IOC Name List file has been read and
+           the corresponding IOC World Bird List JSON-files have been created at an earlier
+           point in time."""
+        self.taxonomy = []
+        self.index = {}
+        self.version = None
+        self.stats = {'infraclass_count': 0,
+                      'order_count': 0,
+                      'family_count': 0,
+                      'genus_count': 0,
+                      'species_count': 0,
+                      'subspecies_count': 0}
+        if dirpath:
+            if os.path.exists(dirpath):
+                self.load_taxonomy(dirpath, version_file_name=VERSION_FILE_NAME)
             else:
-                return False
-        elif version == "14.1":
-            if ((sheet.cell(row=1, column=6).value == "English name") and
-               (sheet.cell(row=1, column=7).value == "Counters")):
-                return True
-            else:
-                return False
-    else:
-        return False
+                print(f"Error: IOC World Bird List directory {dirpath} not found.")
+                raise IocWblDirectoryNotFound(dirpath)
 
-
-def _complementary_wb_version(wb):
-    """Returns the IOC version number of the workbook. Returns None if not able to establish
-       the version."""
-    if wb.worksheets[0].title == "IOC 7.3":
-        return "7.3"
-    elif wb.worksheets[0].title == "IOC 8.1":
-        return "8.1"
-    elif wb.worksheets[0].title == "14.1":
-        return "14.1"
-    else:
-        return None
-
-
-def sorted_ioc_files(filepaths):
-    """Returns a list of IOC File class instances sorted in the order they
-       should be processed, based on the list of 'filepaths'."""
-    assert type(filepaths) is list
-    result = []
-    for path in filepaths:
-        try:
-            wb = xlxs.load_workbook(path)
-        except xlxs.InvalidFileException:
-            print(f"Error: {path} is not an Excel file (.xlxs).")
-            raise
-        if _is_master_wb(wb):
-            result.append(IocMasterFile(wb, path))
-        elif _is_other_lists_wb(wb):
-            result.append(IocOtherListsFile(wb, path))
-        elif _is_multilingual_wb(wb):
-            result.append(IocMultilingualFile(wb, path))
-        elif _is_complementary_wb(wb):
-            result.append(IocComplementaryFile(wb, path))
+    def _write_taxon_to_file(self, directory, taxon):
+        """Write the JSON representation of 'taxon' to file."""
+        for subtaxon in taxon['subtaxa']:
+            self._write_taxon_to_file(directory, subtaxon)
+        if taxon['rank'] == "Species":
+            fname = taxon['binomial_name'].replace(" ", "_") + ".json"
+        elif taxon['rank'] == "Subspecies":
+            fname = taxon['trinomial_name'].replace(" ", "_") + ".json"
         else:
-            print(f"Error: {path} is not an recognized IOC file.")
-            raise UnrecognizedIocFile(path)
-    # Make sure we don't have multiple IOC files of the same type
-    orders = [file.order for file in result]
-    if not len(set(orders)) == len(orders):
-        print("Error: Multiple IOC files of same type.")
-        raise MultipleIocFilesOfSameType(filepaths)
-    # Make sure all IOC files have the same version
-    versions = [file.version for file in result]
-    if not len(set(versions)) <= 1:
-        print("Error: Multiple versions of IOC files.")
-        raise MultipleVersionsOfIocFiles(filepaths)
-    # Return the list of IOC files sorted by their 'order' attribute
-    return sorted(result, key=lambda iocfile: iocfile.order)
+            fname = taxon['name'] + ".json"
+        subtaxa_files = []
+        for subtaxon in taxon['subtaxa']:
+            if subtaxon['rank'] == "Species":
+                subtaxa_files.append(subtaxon['binomial_name'].replace(" ", "_"))
+            elif subtaxon['rank'] == "Subspecies":
+                subtaxa_files.append(subtaxon['trinomial_name'].replace(" ", "_"))
+            else:
+                subtaxa_files.append(subtaxon['name'] + ".json")
+        taxon['subtaxa'] = subtaxa_files
+        f = open(os.path.join(directory, fname), 'w')
+        f.write(json.dumps(taxon))
+        f.close()
+
+    def write_to_files(self, dirpath, version_file_name=VERSION_FILE_NAME):
+        """Write JSON representations of the taxa in IOC taxonomy to files in the directory
+           `dirpath`."""
+        assert os.path.exists(dirpath)
+        f = open(os.path.join(dirpath, version_file_name), 'w')
+        v = {"version": self.version}
+        f.write(json.dumps(v))
+        f.close()
+        for taxon in self.taxonomy:
+            self._write_taxon_to_file(dirpath, taxon)
+
+    def _load_subtaxa(self, taxon, dirpath):
+        """Load the subtaxa for the given taxon."""
+        i = 0
+        for name in taxon['subtaxa']:
+            f = open(os.path.join(dirpath, name))
+            t = json.load(f)
+            f.close()
+            taxon['subtaxa'][i] = t
+            if t['rank'] == "Order":
+                self.stats['order_count'] += 1
+            elif t['rank'] == "Family":
+                self.stats['family_count'] += 1
+            elif t['rank'] == "Genus":
+                self.stats['genus_count'] += 1
+            elif t['rank'] == "Species":
+                self.stats['species_count'] += 1
+            elif t['rank'] == "Subspecies":
+                self.stats['subspecies_count'] += 1
+            self._load_subtaxa(t, dirpath)
+            i += 1
+
+    def load_taxonomy(self, dirpath, version_file_name=VERSION_FILE_NAME):
+        """Load IOC taxonomy from files in the directory `dirpath`."""
+        # Read version
+        p = os.path.join(DEFAULT_DATA_DIR, DEFAULT_IOC_TAXONOMY_DIR)
+        f = open(os.path.join(p, VERSION_FILE_NAME))
+        self.version = json.load(f)["version"]
+        f.close()
+        # Read infraclasses:
+        p = os.popen("grep -l '\"rank\": \"Infraclass\"' %s/*.json" % (dirpath))
+        filenames = p.read().split()
+        p.close()
+        for fname in filenames:
+            f = open(fname)
+            taxon = json.load(f)
+            f.close()
+            self.taxonomy.append(taxon)
+            self._load_subtaxa(taxon, dirpath)
+            self.stats['infraclass_count'] += 1
 
 
 class IocMasterFile (object):
-    """Represents a IOC Master file (Excel)."""
+    """Represents a IOC Master file (Excel). This is the first file that must be read. It will set
+       up an IocWbl object that can then be passed to the other 3 IOC file clases."""
 
-    def __init__(self, workbook, path):
-        """Initialize with Excel 'workbook'."""
-        self.order = 1
-        self.workbook = workbook
-        self.path = path
-        self.version = None
-        self.taxonomy = []        # This list contains the list of top level
-                                  # taxa. Each taxa has a 'subtaxa' attribute
-                                  # which is a list of taxa, etc.
-        self.index = {}           # This index contains all taxa keyed by name
-        self.taxonomy_stats = {}
-        if _is_master_wb(self.workbook):
-            self.version = self.version = _master_wb_version(self.workbook)
+    def __init__(self, filepath):
+        """Initialize with Excel file `filepath`. This will not read the contents of the file."""
+        # Check that it is an Excel-file.
+        try:
+            wb = xlxs.load_workbook(filepath)
+        except xlxs.InvalidFileException:
+            print(f"Error: {filepath} is not an Excel file (.xlxs).")
+            raise
+        # Check that it is a IOC Master file, and if so initialize it.
+        if self._is_master_wb(wb):
+            self.order = 1
+            self.workbook = wb
+            self.path = filepath
+            self.version = self._master_wb_version(self.workbook)
+            self.iocwbl = IocWbl()
         else:
-            print(f"Error: '{path}' is not a valid IOC Master File.\nAn IOC Master file must have the title 'Master' in the first worksheet.")
+            print((f"Error: '{filepath}' is not a valid IOC Master File.\n"
+                   f"An IOC Master file must have the title 'Master' in the first worksheet."))
             raise InvalidIocMasterFile(self.path)
+        # Check the version, to see if we need to do column shift when reading data from it.
         if self.version in ["8.1", "7.3"]:
             self.column_shift = 0
         elif self.version == "14.1":
             self.column_shift = 1
+
+    def _is_master_wb(self, wb):
+        """True if 'wb' is an IOC Masterfile Excel workbook, otherwise False."""
+        return wb.worksheets[0].title == "Master"
+
+    def _master_wb_version(self, wb):
+        """Returns the IOC version number of the workbook. Returns None if not able to establish
+           the version."""
+        if self._is_master_wb(wb):
+            if wb.worksheets[0].cell(row=1, column=2).value:
+                version_string = wb.worksheets[0].cell(row=1, column=2).value
+            elif wb.worksheets[0].cell(row=1, column=3).value:
+                version_string = wb.worksheets[0].cell(row=1, column=3).value
+            regexp = re.compile(r"IOC WORLD BIRD LIST \((.*)\)")
+            mo = regexp.search(version_string)
+            return mo[1]
+        else:
+            return None
 
     def read(self):
         """Read the taxonomy data into the attribute 'self.taxonomy' and
@@ -212,89 +227,139 @@ class IocMasterFile (object):
             if infraclass:
                 taxon['rank'] = "Infraclass"
                 taxon['name'] = infraclass
-                self.taxonomy.append(taxon)
-                self.index[infraclass] = taxon
-                self.taxonomy_stats['infraclass_count'] += 1
+                self.iocwbl.taxonomy.append(taxon)
+                self.iocwbl.index[infraclass] = taxon
+                self.iocwbl.stats['infraclass_count'] += 1
             elif order:
                 taxon['rank'] = "Order"
                 taxon['name'] = order
-                taxon['supertaxon'] = self.taxonomy[-1]['name']
-                self.taxonomy[-1]['subtaxa'].append(taxon)
-                self.index[order] = taxon
-                self.taxonomy_stats['order_count'] += 1
+                taxon['supertaxon'] = self.iocwbl.taxonomy[-1]['name']
+                self.iocwbl.taxonomy[-1]['subtaxa'].append(taxon)
+                self.iocwbl.index[order] = taxon
+                self.iocwbl.stats['order_count'] += 1
             elif family:
                 taxon['rank'] = "Family"
                 taxon['name'] = family
-                taxon['supertaxon'] = self.taxonomy[-1]['subtaxa'][-1]['name']
-                self.taxonomy[-1]['subtaxa'][-1]['subtaxa'].append(taxon)
-                self.index[family] = taxon
-                self.taxonomy_stats['family_count'] += 1
+                taxon['common_names'] = {'en': family_en}
+                taxon['supertaxon'] = self.iocwbl.taxonomy[-1]['subtaxa'][-1]['name']
+                self.iocwbl.taxonomy[-1]['subtaxa'][-1]['subtaxa'].append(taxon)
+                self.iocwbl.index[family] = taxon
+                self.iocwbl.stats['family_count'] += 1
             elif genus:
                 taxon['rank'] = "Genus"
                 # Strip trailing "extinct" characters '\u2020' and whitespace
                 taxon['name'] = genus.title().strip('\u2020').strip()
-                taxon['supertaxon'] = self.taxonomy[-1]['subtaxa'][-1]['subtaxa'][-1]['name']
-                self.taxonomy[-1]['subtaxa'][-1]['subtaxa'][-1]['subtaxa'].append(taxon)
-                self.index[genus] = taxon
-                self.taxonomy_stats['genus_count'] += 1
+                taxon['supertaxon'] = self.iocwbl.taxonomy[-1]['subtaxa'][-1]['subtaxa'][-1]['name']
+                self.iocwbl.taxonomy[-1]['subtaxa'][-1]['subtaxa'][-1]['subtaxa'].append(taxon)
+                self.iocwbl.index[genus] = taxon
+                self.iocwbl.stats['genus_count'] += 1
             elif species:
                 taxon['rank'] = "Species"
                 taxon['name'] = species
-                taxon['supertaxon'] = self.taxonomy[-1]['subtaxa'][-1]['subtaxa'][-1]['subtaxa'][-1]['name']
+                taxon['supertaxon'] = (self.iocwbl.taxonomy[-1]['subtaxa'][-1]['subtaxa'][-1]
+                                       ['subtaxa'][-1]['name'])
                 genus = taxon['supertaxon']
                 # Strip trailing "extinct" characters '\u2020' and whitespace
                 taxon['binomial_name'] = (genus + " " + species).strip('\u2020').strip()
-                self.taxonomy[-1]['subtaxa'][-1]['subtaxa'][-1]['subtaxa'][-1]['subtaxa'].append(taxon)
-                self.index[taxon['binomial_name']] = taxon
-                self.taxonomy_stats['species_count'] += 1
+                subtaxa = (self.iocwbl.taxonomy[-1]['subtaxa'][-1]['subtaxa'][-1]['subtaxa'][-1]
+                           ['subtaxa'])
+                subtaxa.append(taxon)
+                self.iocwbl.index[taxon['binomial_name']] = taxon
+                self.iocwbl.stats['species_count'] += 1
             elif subspecies:
                 taxon['rank'] = "Subspecies"
                 taxon['name'] = subspecies
-                taxon['supertaxon'] = self.taxonomy[-1]['subtaxa'][-1]['subtaxa'][-1]['subtaxa'][-1]['subtaxa'][-1]['name']
-                genus = self.taxonomy[-1]['subtaxa'][-1]['subtaxa'][-1]['subtaxa'][-1]['name']
+                taxon['supertaxon'] = (self.iocwbl.taxonomy[-1]['subtaxa'][-1]['subtaxa'][-1]
+                                       ['subtaxa'][-1]['subtaxa'][-1]['name'])
+                genus = (self.iocwbl.taxonomy[-1]['subtaxa'][-1]['subtaxa'][-1]['subtaxa'][-1]
+                         ['name'])
                 species = taxon['supertaxon']
                 # Strip trailing "extinct" characters '\u2020' and whitespace
-                trinomial_name = (genus + " " + species + " " + subspecies).strip('\u2020').strip ()
+                s = genus + " " + species + " " + subspecies
+                trinomial_name = s.strip('\u2020').strip()
                 # Strip "extinct" characters '\u2020' in trinomial name
                 taxon['trinomial_name'] = trinomial_name.replace(" \u2020", "")
-                self.taxonomy[-1]['subtaxa'][-1]['subtaxa'][-1]['subtaxa'][-1]['subtaxa'][-1]['subtaxa'].append(taxon)
-                self.index[taxon['trinomial_name']] = taxon
-                self.taxonomy_stats['subspecies_count'] += 1
+                subtaxa = (self.iocwbl.taxonomy[-1]['subtaxa'][-1]['subtaxa'][-1]['subtaxa'][-1]
+                           ['subtaxa'][-1]['subtaxa'])
+                subtaxa.append(taxon)
+                self.iocwbl.index[taxon['trinomial_name']] = taxon
+                self.iocwbl.stats['subspecies_count'] += 1
 
 
 class IocOtherListsFile (object):
-    """Represents a IOC Other Lists file (Excel)."""
+    """Represents a IOC Other Lists file (Excel). NOTE: This file seems to have been dropped from
+       the IOC files somewhere between version 8.1 and 14.1."""
 
-    def __init__(self, workbook, path):
-        """Initialize with the Excel 'workbook'."""
-        self.order = 2
-        self.workbook = workbook
-        self.path = path
-        self.version = None
-        self.taxonomy = {}       # This object contains taxa indexed by their
-                                 # IOC name (or binomial or trinomial name if
-                                 # applicable (for species and subspecies)
-        self.nonindexed = []     # List of all taxa that do not exist in IOC
-                                 # but do exist in other lists
-        self.taxonomy_stats = {}
-        self.lists = {'ioc_7_3': 'Gill, F & D Donsker (Eds). 2017. IOC World Bird List (v 7.3)',
-                      'clements_2016': 'Clements, J. F., T. S. Schulenberg, M. J. Iliff, D. Roberson, T. A. Fredericks, B. L. Sullivan, and C. L. Wood. 2016. The eBird/Clements checklist of birds of the world: v2016.',
-                      'hbwbl_2016': 'del Hoyo, J., N. J. Collar, D. A. Christie, A. Elliott,  L. D. C. Fishpool, P. Boesman & G. M. Kirwan. 2014-2016. HBW and BirdLife International Illustrated Checklist of the Birds of the World, Volume 1, 2, Lynx Edicions in association with BirdLife International, Barcelona, Spain and Cambridge, UK.',
-                      'hm4_4ed': 'Dickinson, E.C., J.V. Remsen Jr. & L. Christidis (Eds). 2013-2014. The Howard & Moore Complete Checklist of the Birds of the World. 4th. Edition, Vol. 1, 2, Aves Press, Eastbourne, U.K. Plus CD content: Tyrberg, T. & E.C. Dickinson Appendix 5: Extinct species. (Also includes Errata and Corrigenda to Volume 1 and List of Errata for Vol. 2 plus Corrigenda in respect of range statements and additional Errata from Vol. 1)',
-                      'hbw_2013': 'del Hoyo, J., A. Elliott, J. Sargatal & D. A. Christie (Eds). 1992-2013. Handbook of the Birds of the World, Lynx Edicions.',
-                      'peters_1986': 'Peters, J.L. et al. Check-list of Birds of the World, 1931-1986. Harvard University Press/Museum of Comparative Zoology.',
-                      'boyd_3_08': 'John H. Boyd III - TiF checklist, Version 3.08: May 1 2017 and updated July 12 2017',
-                      'hbwbl_2017': 'BirdLife International (2017) Handbook of the Birds of the World and BirdLife International digital checklist of the birds of the world. Version 9.1. Available at: http://datazone.birdlife.org/userfiles/file/Species/Taxonomy/BirdLife_Checklist_Version_91.zip [.xls zipped 1 MB].',
-                      'sibley_1993': 'Sibley, C. G. and B. L. Monroe. 1993. A Supplement to Distribution and Taxonomy of Birds of the World. Yale University Press, New Haven, Connecticut.',
-                      'ioc_7_2': 'Gill, F & D Donsker (Eds). 2017. IOC World Bird List (v 7.2)',
-                      'ioc_7_1': 'Gill, F & D Donsker (Eds). 2017. IOC World Bird List (v 7.1)'}
-        if "vs_other_lists" in self.workbook.worksheets[0].title:
-            s = self.workbook.worksheets[0].cell(row=1, column=2).value
-            regexp = re.compile(".*\(v (.*)\).*")
+    def __init__(self, filepath, iocwbl):
+        """Initialize with Excel file `filepath` and an `iocwbl` object obtained from an
+           `IocMasterFile` object. This will not read the contents of the file."""
+        # Check that it is an Excel-file.
+        try:
+            wb = xlxs.load_workbook(filepath)
+        except xlxs.InvalidFileException:
+            print(f"Error: {filepath} is not an Excel file (.xlxs).")
+            raise
+        # Check that it is a IOC Other Lists file, and if so initialize it.
+        if self._is_other_lists_wb(wb):
+            self.iocwbl = iocwbl
+            self.order = 2
+            self.path = filepath
+            self.workbook = wb
+            self.version = self._other_lists_wb_version(wb)
+            self.taxonomy_stats = {}
+            self.lists = {
+                'ioc_7_3': 'Gill, F & D Donsker (Eds). 2017. IOC World Bird List (v 7.3)',
+                'clements_2016': (
+                    "Clements, J. F., T. S. Schulenberg, M. J. Iliff, D. Roberson, T. A. "
+                    "Fredericks, B. L. Sullivan, 'C. L. Wood, and D. F. A. Wiedenfeld. 2016. "
+                    "The Clements Checklist of Birds of the World: Version 6.9. Cornell Lab of "
+                    "Ornithology."),
+                'hbwbl_2016': (
+                    "del Hoyo, J., N. J. Collar, D. A. Christie, A. Elliott, L. D. C. Fishpool, "
+                    "P. Boesman & G. M. Kirwan (Eds). 2016. Handbook of the Birds of the World "
+                    "and BirdLife International Illustrated Checklist of the Birds of the World. "
+                    "Volume 1: Non-Passerines."),
+                'hm4_4ed': (
+                    "Dickinson, E.C., J.V. Remsen Jr. & L. Christidis (Eds). 2013-2014. The "
+                    "Howard & Moore Complete Checklist of the Birds of the World. 4th Edition. "
+                    "Aves Press."),
+                'hbw_2013': (
+                    "del Hoyo, J., A. Elliott, J. Sargatal & D. A. Christie (Eds). 1992-2013. "
+                    "Handbook of the Birds of the World. Vols. 1-19. Lynx Edicions."),
+                'peters_1986': (
+                    "Peters, J.L. et al. Check-list of Birds of the World, 1931-1986. Harvard "
+                    "University Press/Museum of Comparative Zoology."),
+                'boyd_3_08': (
+                    "John H. Boyd III - TiF checklist, Version 3.08: May 1 2017 and updated July "
+                    "12 2017."),
+                'hbwbl_2017': (
+                    "BirdLife International (2017) Handbook of the Birds of the World and "
+                    "BirdLife International digital checklist. Version 1.0."),
+                'sibley_1993': (
+                    "Sibley, C. G. and B. L. Monroe. 1993. A Supplement to Distribution and "
+                    "Taxonomy of Birds of the World."),
+                'ioc_7_2': 'Gill, F & D Donsker (Eds). 2017. IOC World Bird List (v 7.2)',
+                'ioc_7_1': 'Gill, F & D Donsker (Eds). 2017. IOC World Bird List (v 7.1)'
+            }
+        else:
+            print((f"Error: '{filepath}' is not a valid IOC Other Lists File.\nAn IOC Other "
+                   "Lists file must have the word 'vs_other_lists' in the title of the first "
+                   "worksheet."))
+            raise InvalidIocOtherListsFile(self.path)
+
+    def _is_other_lists_wb(self, wb):
+        """True if 'wb' is an IOC Other Lists Excel workbook, otherwise False."""
+        return "vs_other_lists" in wb.worksheets[0].title
+
+    def _other_lists_wb_version(self, wb):
+        """Returns the IOC version number of the workbook. Returns None if not able to establish
+           the version."""
+        if self._is_other_lists_wb(wb):
+            s = wb.worksheets[0].cell(row=1, column=2).value
+            regexp = re.compile(r".*\(v (.*)\).*")
             self.version = regexp.match(s).groups()[0]
         else:
-            print(f"Error: '{path}' is not a valid IOC Other Lists File.\nAn IOC Other Lists file must have the word 'vs_other_lists' in the title of the first worksheet.")
-            raise InvalidIocOtherListsFile(self.path)
+            return None
 
     def read(self):
         """Read the taxonomy data into the attribute 'self.taxonomy' and
@@ -359,25 +424,72 @@ class IocOtherListsFile (object):
                 self.taxonomy[latest_name]['following_entries'].append(entry)
                 self.taxonomy_stats['only_in_other_lists_count'] += 1
 
+    def _add_other_lists(self):
+        """Add other lists based on the IOC Other Lists File to `self.iocwbl`."""
+        # TBD! We probably need to store the data we read from the iocwlb
+        # as a list of "lines"/"entries" each containing information on a taxa,
+        # maybe complementing it with an index of taxon names pointing to the
+        # corresponding "line"/"entry".
+        for name in iter(self.iocwbl.index):
+            if name in self.taxonomy:
+                entries = self.taxonomy[name]["following_entries"]
+                lists = self.taxonomy[name]["lists"]
+                self.iocwbl.index[name]["following_entries"] = (entries)
+                self.iocwbl.index[name]["lists"] = (lists)
+
 
 class IocMultilingualFile (object):
-    """Represents a IOC Multilingual file (Excel). Languages are encoded with ISO
-       639-2 codes (which are not used in the actual file)."""
+    """Represents a IOC Multilingual file (Excel). Languages are encoded with ISO 639-2 codes
+       (which are not used in the actual file)."""
 
-    def __init__(self, workbook, path):
-        """Initialize with the Excel 'workbook'."""
-        self.order = 3
-        self.workbook = workbook
-        self.path = path
-        self.version = None
-        self.taxonomy = {}          # This object contains taxa indexed by their
-                                    # name
-        self.taxonomy_stats = {}
-        if _is_multilingual_wb(self.workbook):
-            self.version = self.version = _multilingual_wb_version(self.workbook)
+    def __init__(self, filepath, iocwbl):
+        """Initialize with Excel file `filepath` and an `iocwbl` object obtained from an
+           `IocMasterFile` object. This will not read the contents of the file."""
+        # Check that it is an Excel-file.
+        try:
+            wb = xlxs.load_workbook(filepath)
+        except xlxs.InvalidFileException:
+            print(f"Error: {filepath} is not an Excel file (.xlxs).")
+            raise
+        # Check that it is a IOC Multilingual file, and if so initialize it.
+        if self._is_multilingual_wb(wb):
+            self.iocwbl = iocwbl
+            self.order = 3
+            self.workbook = wb
+            self.path = filepath
+            self.version = self._multilingual_wb_version(wb)
+            self.taxonomy = {}          # This object contains taxa indexed by their name
+            self.taxonomy_stats = {}
         else:
-            print("Error: '{path}' is not a valid IOC Multilingual File.\nAn IOC Multilingual file must have the word 'List' in the title of the first worksheet and Sources' in the title of the second worksheet.")
+            print((f"Error: '{filepath}' is not a valid IOC Multilingual File.\nAn IOC Multilingual"
+                   "file must have the word 'List' in the title of the first worksheet and"
+                   "'Sources' in the title of the second worksheet."))
             raise InvalidIocMultilingualFile(self.path)
+
+    def _is_multilingual_wb(self, wb):
+        """True if 'wb' is an IOC Multilingual Excel workbook, otherwise False."""
+        return wb.worksheets[0].title == "List" and wb.worksheets[1].title == "Sources"
+
+    def _multilingual_wb_version(self, wb):
+        """Returns the IOC version number of the workbook. Returns None if not able to establish
+           the version."""
+        if self._is_multilingual_wb(wb):
+            if wb.worksheets[0].cell(row=1, column=4).value == "IOC_14.1":
+                return "14.1"
+            elif wb.worksheets[0].cell(row=1, column=4).value == "Scientific Name 8.1":
+                return "8.1"
+            elif wb.worksheets[0].cell(row=1, column=1).value == "7.3":
+                return "7.3"
+            else:
+                return None
+        else:
+            return None
+
+    def _add_languages(self):
+        """Add languages from the IOC Multilingual file to `self.iocwbl`."""
+        for name in iter(self.iocwbl.index):
+            if name in self.taxonomy:
+                self.iocwbl.index[name]["common_names"].update(self.taxonomy[name])
 
     def read(self):
         """Read the taxonomy data into the attribute 'self.taxonomy' and
@@ -481,29 +593,81 @@ class IocMultilingualFile (object):
                          'th': row[47].value}
                 self.taxonomy[name] = entry
                 self.taxonomy_stats['species_count'] += 1
+        self._add_languages()
 
 
 class IocComplementaryFile (object):
     """Represents a IOC Complementary file (Excel)."""
 
-    def __init__(self, workbook, path):
-        """Initialize with the Excel 'workbook'."""
-        self.order = 4
-        self.workbook = workbook
-        self.path = path
-        self.version = None
-        self.taxonomy = {}          # This object contains taxa indexed by their name
-        self.taxonomy_stats = {}
-        if _is_complementary_wb(self.workbook):
-
-            self.version = _complementary_wb_version(self.workbook)
+    def __init__(self, filepath, iocwbl):
+        """Initialize with Excel file `filepath`. This will not read the contents of the file."""
+        # Check that it is an Excel-file.
+        try:
+            wb = xlxs.load_workbook(filepath)
+        except xlxs.InvalidFileException:
+            print(f"Error: {filepath} is not an Excel file (.xlxs).")
+            raise
+        # Check that it is a IOC Multilingual file, and if so initialize it.
+        if self._is_complementary_wb(wb):
+            self.iocwbl = iocwbl
+            self.order = 4
+            self.workbook = wb
+            self.path = filepath
+            self.version = self._complementary_wb_version(self.workbook)
+            self.taxonomy = {}          # This object contains taxa indexed by their name
+            self.taxonomy_stats = {}
+        # Check the version, to see if we need to do column shift when reading data from it.
             if self.version in ["8.1", "7.3"]:
                 self.column_shift = 0
             elif self.version == "14.1":
                 self.column_shift = 1
         else:
-            print(f"Error: '{path}' is not a valid IOC Complementary File.\nThe first worksheet title of an IOC Complementary file must be 'IOC 7.3', 'IOC 8.1' or '14.1'.")
+            print((f"Error: '{filepath}' is not a valid IOC Complementary File.\nThe first "
+                   "worksheet title of an IOC Complementary file must be 'IOC 7.3', 'IOC 8.1' "
+                   "or '14.1'."))
             raise InvalidIocComplementaryFile(self.path)
+
+    def _is_complementary_wb(self, wb):
+        """True if 'wb' is an IOC Complementary Excel workbook, otherwise False. These files are
+           normally named 'IOC_Names_File_Plus-N.M.xlxs, where N is the major version number and
+           M is the minor version number."""
+        sheet = wb.worksheets[0]
+        version = self._complementary_wb_version(wb)
+        if version:
+            if version in ["7.3", "8.1"]:
+                if ((sheet.cell(row=1, column=4).value == "English name") and
+                   (sheet.cell(row=1, column=5).value == "Counters")):
+                    return True
+                else:
+                    return False
+            elif version == "14.1":
+                if ((sheet.cell(row=1, column=6).value == "English name") and
+                   (sheet.cell(row=1, column=7).value == "Counters")):
+                    return True
+                else:
+                    return False
+        else:
+            return False
+
+    def _complementary_wb_version(self, wb):
+        """Returns the IOC version number of the workbook. Returns None if not able to establish
+           the version."""
+        if wb.worksheets[0].title == "IOC 7.3":
+            return "7.3"
+        elif wb.worksheets[0].title == "IOC 8.1":
+            return "8.1"
+        elif wb.worksheets[0].title == "14.1":
+            return "14.1"
+        else:
+            return None
+
+    def _add_complementary_info(self):
+        """Add complementary information from the IOC Complementary file to `self.iocwbl`."""
+        for name in iter(self.iocwbl.index):
+            relevant_ranks = ["Genus", "Species", "Subspecies"]
+            if name in self.taxonomy and self.iocwbl.index[name]["rank"] in relevant_ranks:
+                self.iocwbl.index[name]["extinct"] = self.taxonomy[name]["extinct"]
+                self.iocwbl.index[name]["code"] = self.taxonomy[name]["code"]
 
     def read(self):
         """Read the taxonomy data into the attribute 'self.taxonomy' and
@@ -569,55 +733,4 @@ class IocComplementaryFile (object):
                                        'nonbreeding_range': row[8].value,
                                        'code': row[9].value,
                                        'comment': row[10].value}
-
-
-class IocData (object):
-    """Represents all IOC data and the entire IOC taxonomic hierarchy. The top
-       level taxa are available in the attribute 'top_taxa'. ALl other taxa can
-       be retrieved by name with the feature 'taxon'."""
-
-    def __init__(self, directory):
-        """Initialize with the specified 'directory'."""
-        assert os.path.exists(directory)
-        assert os.path.isdir(directory)
-        self.directory = directory
-        self.top_taxa = self.__top_taxa__()
-
-    def __top_taxa__(self):
-        """A list of the top IocTaxon in IOC. These IocTaxa have the rank
-           "Infraclass"."""
-        result = []
-        for name in TOP_TAXA_NAMES:
-            result.append(IocTaxon(name))
-        return result
-
-    def taxon(self, name):
-        """Return the IocTaxon with the given 'name'. Returns None if there is
-           no such IocTaxon."""
-        t = IocTaxon(name, self.directory)
-        if t.exists:
-            return t
-        else:
-            return None
-
-
-class IocTaxon (object):
-    """Represents an IOC taxon as transformed from the Excel data in the IOC
-       Master file, Complementary file, Multilingual file and Other Lists
-       file. All data for the taxon is available in the attribute 'data'."""
-
-    def __init__(self, name, directory):
-        """Initialize with the name, that can be a binomial species or a
-           trinomial subspecies name."""
-        self.data = {'name': name}
-        self.filename = os.path.join(directory, name + '.json')
-        self.exists = os.path.exists(self.filename)
-        self.__load__()
-
-    def __load__(self):
-        """Load from JSON file."""
-        if self.exists:
-            fname = self.data['name'] + '.json'
-            f = open(fname)
-            self.data = json.load(f)
-            f.close()
+        self._add_complementary_info()
