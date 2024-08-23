@@ -87,9 +87,9 @@ class IocWbl(object):
         subtaxa_files = []
         for subtaxon in taxon['subtaxa']:
             if subtaxon['rank'] == "Species":
-                subtaxa_files.append(subtaxon['binomial_name'].replace(" ", "_"))
+                subtaxa_files.append(subtaxon['binomial_name'].replace(" ", "_") + ".json")
             elif subtaxon['rank'] == "Subspecies":
-                subtaxa_files.append(subtaxon['trinomial_name'].replace(" ", "_"))
+                subtaxa_files.append(subtaxon['trinomial_name'].replace(" ", "_") + ".json")
             else:
                 subtaxa_files.append(subtaxon['name'] + ".json")
         taxon['subtaxa'] = subtaxa_files
@@ -117,14 +117,19 @@ class IocWbl(object):
             f.close()
             taxon['subtaxa'][i] = t
             if t['rank'] == "Order":
+                self.index[t['name']] = t
                 self.stats['order_count'] += 1
             elif t['rank'] == "Family":
+                self.index[t['name']] = t
                 self.stats['family_count'] += 1
             elif t['rank'] == "Genus":
+                self.index[t['name']] = t
                 self.stats['genus_count'] += 1
             elif t['rank'] == "Species":
+                self.index[t['binomial_name']] = t
                 self.stats['species_count'] += 1
             elif t['rank'] == "Subspecies":
+                self.index[t['trinomial_name']] = t
                 self.stats['subspecies_count'] += 1
             self._load_subtaxa(t, dirpath)
             i += 1
@@ -144,6 +149,7 @@ class IocWbl(object):
             f = open(fname)
             taxon = json.load(f)
             f.close()
+            self.index[taxon['name']] = taxon
             self.taxonomy.append(taxon)
             self._load_subtaxa(taxon, dirpath)
             self.stats['infraclass_count'] += 1
