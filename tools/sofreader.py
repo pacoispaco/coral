@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-"""This program reads SOF (Birdlife Sweden) name list files containing Swedish names and prints 
+"""This program reads SOF (Birdlife Sweden) name list files containing Swedish names and prints
    JSON representations of that data to stdout, or to files."""
 
 import argparse

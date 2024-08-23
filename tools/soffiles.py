@@ -6,7 +6,6 @@ import json
 import os
 import os.path
 import openpyxl.reader.excel as xlxs
-import re
 
 
 VERSION_FILE_NAME = "version.json"
@@ -37,7 +36,7 @@ class SofWbl(object):
 
     def __init__(self, dirpath=None):
         """Initailize the SOF World Bird List. If `dirpath`is None, and empty object will be
-           created. If `dirpath` is not None, it will try to read the SOF World Bird List 
+           created. If `dirpath` is not None, it will try to read the SOF World Bird List
            JSON-files from there. That assumes that the SOF Name List file has been read and
            the corresponding SOF World Bird List JSON-files have been created at an earlier
            point in time."""
@@ -146,7 +145,8 @@ class SofNamesFile (object):
             self.sofwbl = SofWbl()
             self.version = self._sof_wb_version(self.workbook)
         else:
-            print(f"Error: '{filepath}' is not a valid SOF Names File.\nA SOF Names file must have the text 'NL' in the title of the first worksheet.")
+            print((f"Error: '{filepath}' is not a valid SOF Names File.\nA SOF Names file must "
+                   "have the text 'NL' in the title of the first worksheet."))
             raise InvalidSofFile(self.path)
 
     def _is_sof_names_wb(self, wb):
@@ -167,6 +167,7 @@ class SofNamesFile (object):
         ws = self.workbook.worksheets[0]
         # First we read all the taxa
         i = 1
+        # The file contains notes in the last rows of the file, and we parse them in the end.
         parsing_notes = False
         notes = {}
         taxa_with_notes = []
@@ -207,7 +208,8 @@ class SofNamesFile (object):
                 elif row[1].value is None:
                     parsing_notes = True
                 else:
-                    print(f"Error: Unrecognized taxon type in {self.path} on row {i}: {row[2].value}")
+                    print((f"Error: Unrecognized taxon type in {self.path} on row {i}: "
+                           "{row[2].value}"))
                     raise UnrecognizedTaxon(self.path)
                 i += 1
                 if len(taxon['notes']) > 0 and not taxon['notes'] == ['None']:
