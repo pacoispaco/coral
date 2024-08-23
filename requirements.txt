@@ -1,5 +1,6 @@
 openpyxl
-#pycountry
 langcodes
 Flask
 jupyterlab
+pydantic
+flake8
