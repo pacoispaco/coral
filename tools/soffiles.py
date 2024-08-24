@@ -195,7 +195,6 @@ class SofNamesFile (object):
                     self.sofwbl.taxonomy[-1]['subtaxa'].append(taxon)
                 elif row[1].value == "art":
                     self.sofwbl.stats['species_count'] += 1
-                    print(row[2].value)
                     taxon = {'rank': 'Species',
                              'binomial_name': row[2].value,
                              'name': row[2].value.split()[1],
