@@ -57,7 +57,7 @@ def file_versions_are_consistent(ioc_files):
     return len(set(version_values)) <= 1
 
 
-def handle_files(filepaths, write, info, verbose, dry_run):
+def handle_files(filepaths, write, output_dir, info, verbose, dry_run):
     """Handle the IOC files. if 'write' then write data to files. If 'info'
        then print information on the contents of the files. If 'verbose'
        then print information on progress and what's happening. If 'dry_run'
@@ -104,7 +104,7 @@ def handle_files(filepaths, write, info, verbose, dry_run):
     # Check to see if we are to write to file or stdout, and do so if requested.
     if not dry_run:
         if write:
-            p = os.path.join(DEFAULT_DATA_DIR, DEFAULT_IOC_TAXONOMY_DIR)
+            p = os.path.join(output_dir, DEFAULT_IOC_TAXONOMY_DIR)
             if os.path.exists(p):
                 print("Error: Directory '%s' already exists." % (p))
                 sys.exit(ERROR_DATA_DIR_EXISTS_ALREADY)
@@ -134,6 +134,9 @@ def main():
                         help="print info about the IOC files [False]")
     parser.add_argument('-w', '--write', action='store_true', default=False,
                         help="write to JSON files [False]")
+    parser.add_argument('-o', '--output-dir', default=DEFAULT_DATA_DIR,
+                        help=("directory where the output directory with JSON files "
+                              f"is written [{DEFAULT_DATA_DIR}]"))
     parser.add_argument('-O', '--other-lists-file', default=None,
                         help="IOC Other Lists file")
     parser.add_argument('-M', '--multilingual-file', default=None,
@@ -168,7 +171,7 @@ def main():
     else:
         files["complimentary-file"] = args.complimentary_file
     # Then read the files in correct order
-    handle_files(files, args.write, args.info, args.verbose, args.dry_run)
+    handle_files(files, args.write, args.output_dir, args.info, args.verbose, args.dry_run)
 
 
 if __name__ == "__main__":
