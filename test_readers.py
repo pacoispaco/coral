@@ -1,9 +1,10 @@
 # This file contains Pytest-based unit tests for the SOF files module.
 
-import glob
+#import glob
 import os
 import pytest
 import shlex
+import shutil
 import subprocess
 
 # Constants
@@ -25,16 +26,21 @@ READERS = [SOF_READER, IOC_READER]
 
 @pytest.fixture
 def set_up():
-    print("FIXTURE: Set up")
-    pass
+    print("\nFixture 'set_up'. Delete JSON data directories.")
+    if os.path.exists(SOF_JSON_DIR):
+        pass
+        shutil.rmtree(SOF_JSON_DIR)
+    if os.path.exists(IOC_JSON_DIR):
+        pass
+        shutil.rmtree(SOF_JSON_DIR)
 
 
 @pytest.fixture
 def clean_up():
-    print("FIXTURE: Clean up")
+    print("\nFixture 'clean_up'.")
 
 
-def test_help():
+def test_help(set_up, clean_up):
     """Test the help option of all readers."""
     for reader in READERS:
         command = f"./{reader} -h"
@@ -71,7 +77,7 @@ def test_sof_reader():
     assert completed_process.returncode == 0
 
 
-def test_sof_writer():
+def test_sof_writer(set_up, clean_up):
     """Test the SOF reader and its writing of JSON files."""
     command = f"./{SOF_READER} -w -o {JSON_DATA_DIR} {SOF_DATA_FILE}"
     completed_process = subprocess.run(shlex.split(command), capture_output=True, text=True)
@@ -113,6 +119,9 @@ def test_ioc_ivd():
                                        text=True,
                                        shell=False)
     assert completed_process.returncode == 0
+    print("==========")
+    print(completed_process.stdout)
+    print("==========")
     output = """Taxonomy statistics:
   Taxonomy: IOC None
   Infraclasses: 2
