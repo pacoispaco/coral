@@ -181,7 +181,7 @@ class IocMasterFile (object):
         # Check the version, to see if we need to do column shift when reading data from it.
         if self.version in ["8.1", "7.3"]:
             self.column_shift = 0
-        elif self.version == "14.1":
+        elif self.version >= "14.1":
             self.column_shift = 1
 
     def _is_master_wb(self, wb):
@@ -480,8 +480,9 @@ class IocMultilingualFile (object):
         """Returns the IOC version number of the workbook. Returns None if not able to establish
            the version."""
         if self._is_multilingual_wb(wb):
-            if wb.worksheets[0].cell(row=1, column=4).value == "IOC_14.1":
-                return "14.1"
+            if wb.worksheets[0].cell(row=1, column=4).value[0:4] == "IOC_":
+                # This shouild work for "IOC_14.1" and later
+                return wb.worksheets[0].cell(row=1, column=4).value[4:]
             elif wb.worksheets[0].cell(row=1, column=4).value == "Scientific Name 8.1":
                 return "8.1"
             elif wb.worksheets[0].cell(row=1, column=1).value == "7.3":
@@ -625,7 +626,7 @@ class IocComplementaryFile (object):
         # Check the version, to see if we need to do column shift when reading data from it.
             if self.version in ["8.1", "7.3"]:
                 self.column_shift = 0
-            elif self.version == "14.1":
+            elif self.version in ["14.1", "14.2"]:
                 self.column_shift = 1
         else:
             print((f"Error: '{filepath}' is not a valid IOC Complementary File.\nThe first "
@@ -646,7 +647,7 @@ class IocComplementaryFile (object):
                     return True
                 else:
                     return False
-            elif version == "14.1":
+            elif version in ["14.1", "14.2"]:
                 if ((sheet.cell(row=1, column=6).value == "English name") and
                    (sheet.cell(row=1, column=7).value == "Counters")):
                     return True
@@ -662,10 +663,9 @@ class IocComplementaryFile (object):
             return "7.3"
         elif wb.worksheets[0].title == "IOC 8.1":
             return "8.1"
-        elif wb.worksheets[0].title == "14.1":
-            return "14.1"
         else:
-            return None
+            # This works for 14.1 and 14.2
+            return wb.worksheets[0].title
 
     def _add_complementary_info(self):
         """Add complementary information from the IOC Complementary file to `self.iocwbl`."""
