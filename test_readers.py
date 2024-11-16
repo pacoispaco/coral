@@ -1,6 +1,6 @@
-# This file contains Pytest-based unit tests for the SOF files module.
+# This file contains Pytest-based unit tests for the IOC and SOF files modules.
 
-#import glob
+# import glob
 import os
 import pytest
 import shlex
