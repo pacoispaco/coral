@@ -45,13 +45,17 @@ TBD.
 
 ### Tests
 
-TBD.
+There exists a pytest-based test script `test_readers-py` for the tools scripts in the `tools/` directory. It can be run from the root directory with:
+```
+$ pytest -v
+```
+It will create a `testdata/` directory, as a result of running the tests.
 
 ### Directory structure
 
  * 'data' contains taxonomic data files from external data sources.
- * 'taxonomyd' contains source code for the HTTP API server.
- * 'src' contains source code for various data import and transformation scripts.
+ * 'api' contains source code for the HTTP API server.
+ * 'tools' contains source code for various data import and transformation scripts.
 
 ## Data sources
 
