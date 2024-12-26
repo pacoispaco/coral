@@ -18,6 +18,7 @@ The file is published both as a Excel file (.xlxs) and as a PDF file. The deduce
 * A number of rows with footnotes, all in the third column.
 
 Each row with data on an order, family or a species has the following columns/cells:
+
 * "Nr". Indicates the item number.
 * "Nivå". Indicates if it is an order, family or species data row. It is implemented as an Excel 
   formula for some unknown reason.
