@@ -236,29 +236,39 @@ class IocMasterFile (object):
                 self.iocwbl.taxonomy.append(taxon)
                 self.iocwbl.index[infraclass] = taxon
                 self.iocwbl.stats['infraclass_count'] += 1
+                order_i = 1
             elif order:
                 taxon['rank'] = "Order"
                 taxon['name'] = order
                 taxon['supertaxon'] = self.iocwbl.taxonomy[-1]['name']
+                taxon['sort_index'] = order_i
+                order_i += 1
                 self.iocwbl.taxonomy[-1]['subtaxa'].append(taxon)
                 self.iocwbl.index[order] = taxon
                 self.iocwbl.stats['order_count'] += 1
+                family_i = 1
             elif family:
                 taxon['rank'] = "Family"
                 taxon['name'] = family
                 taxon['common_names'] = {'en': family_en}
                 taxon['supertaxon'] = self.iocwbl.taxonomy[-1]['subtaxa'][-1]['name']
+                taxon['sort_index'] = family_i
+                family_i += 1
                 self.iocwbl.taxonomy[-1]['subtaxa'][-1]['subtaxa'].append(taxon)
                 self.iocwbl.index[family] = taxon
                 self.iocwbl.stats['family_count'] += 1
+                genus_i = 1
             elif genus:
                 taxon['rank'] = "Genus"
                 # Strip trailing "extinct" characters '\u2020' and whitespace
                 taxon['name'] = genus.title().strip('\u2020').strip()
                 taxon['supertaxon'] = self.iocwbl.taxonomy[-1]['subtaxa'][-1]['subtaxa'][-1]['name']
+                taxon['sort_index'] = genus_i
+                genus_i += 1
                 self.iocwbl.taxonomy[-1]['subtaxa'][-1]['subtaxa'][-1]['subtaxa'].append(taxon)
                 self.iocwbl.index[genus] = taxon
                 self.iocwbl.stats['genus_count'] += 1
+                species_i = 1
             elif species:
                 taxon['rank'] = "Species"
                 taxon['name'] = species
@@ -267,11 +277,14 @@ class IocMasterFile (object):
                 genus = taxon['supertaxon']
                 # Strip trailing "extinct" characters '\u2020' and whitespace
                 taxon['binomial_name'] = (genus + " " + species).strip('\u2020').strip()
+                taxon['sort_index'] = species_i
+                species_i += 1
                 subtaxa = (self.iocwbl.taxonomy[-1]['subtaxa'][-1]['subtaxa'][-1]['subtaxa'][-1]
                            ['subtaxa'])
                 subtaxa.append(taxon)
                 self.iocwbl.index[taxon['binomial_name']] = taxon
                 self.iocwbl.stats['species_count'] += 1
+                subspecies_i = 1
             elif subspecies:
                 taxon['rank'] = "Subspecies"
                 taxon['name'] = subspecies
@@ -280,6 +293,8 @@ class IocMasterFile (object):
                 genus = (self.iocwbl.taxonomy[-1]['subtaxa'][-1]['subtaxa'][-1]['subtaxa'][-1]
                          ['name'])
                 species = taxon['supertaxon']
+                taxon['sort_index'] = subspecies_i
+                subspecies_i += 1
                 # Strip trailing "extinct" characters '\u2020' and whitespace
                 s = genus + " " + species + " " + subspecies
                 trinomial_name = s.strip('\u2020').strip()

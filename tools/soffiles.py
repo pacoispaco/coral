@@ -182,6 +182,7 @@ class SofNamesFile (object):
                              'common_names': {'sv': row[4].value},
                              'subtaxa': []}
                     self.sofwbl.taxonomy.append(taxon)
+                    familj_i = 1
                 elif row[1].value == "familj":
                     self.sofwbl.stats['family_count'] += 1
                     family = row[2].value
@@ -192,7 +193,10 @@ class SofNamesFile (object):
                                               'sv': row[4].value},
                              'subtaxa': []}
                     taxon['supertaxon'] = self.sofwbl.taxonomy[-1]['name']
+                    taxon['sort_index'] = familj_i
+                    familj_i += 1
                     self.sofwbl.taxonomy[-1]['subtaxa'].append(taxon)
+                    art_i = 1
                 elif row[1].value == "art":
                     self.sofwbl.stats['species_count'] += 1
                     taxon = {'rank': 'Species',
@@ -203,6 +207,8 @@ class SofNamesFile (object):
                                               'sv': row[4].value},
                              'subtaxa': []}
                     taxon['supertaxon'] = self.sofwbl.taxonomy[-1]['subtaxa'][-1]['name']
+                    taxon['sort_index'] = art_i
+                    art_i += 1
                     self.sofwbl.taxonomy[-1]['subtaxa'][-1]['subtaxa'].append(taxon)
                 elif row[1].value is None:
                     parsing_notes = True
