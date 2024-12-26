@@ -93,6 +93,7 @@ def test_sof_writer(set_up, clean_up):
     assert completed_process.returncode == 3
     # Clean up the JSON files.
 
+
 def test_sof_loader():
     """Test the SOF reader and its loading of JSON files."""
     pass
