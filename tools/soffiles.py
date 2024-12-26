@@ -32,7 +32,7 @@ class UnrecognizedTaxon (Exception):
 # Classes
 
 class SofWbl(object):
-    """Representation of IOC World Bird List"""
+    """Representation of SOF World Bird List"""
 
     def __init__(self, dirpath=None):
         """Initailize the SOF World Bird List. If `dirpath`is None, and empty object will be
