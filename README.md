@@ -1,18 +1,10 @@
-# Readme for twitchspot-taxonomy
+# Readme for coral
 
-Twitchspot is the name of my personal project for experimenting with different
-programming languages and technologies for manipulating and serving information 
-on biological taxonomies and names, as well as different solutions for creating
-checklists and reporting observations. This has been an ongoing project, with
-very varying commitment for around 25 years. A lot of older code is not in this
-repository
+Coral is the name of my personal project for experimenting with different programming languages and technologies for manipulating and serving information on biological taxonomies and names, as well as different solutions for creating checklists and reporting observations. Especially for birds. This has been an ongoing project, with very varying commitment for around 25 years. A lot of older code is not in this repository
 
-Twitchspot-taxonomy is an HTTP API that serves information on biological
-taxonomies and species names. It also comprises a few command line tools for
-importing taxonomical data to the system from different sources.
+Coral will have an HTTP API that serves information on biological taxonomies and species names. It also comprises a few command line tools for importing taxonomical data to the system from different sources.
 
-Copyright (C) 1998-2024 Paul Cohen. This software is licensed under the GNU Affero
-General Public License version 3. See the file [agpl.md](agpl.md) in this directory.
+Copyright (C) 1998-2024 Paul Cohen. This software is licensed under the GNU Affero General Public License version 3. See the file [agpl.md](agpl.md) in this directory.
 
 ## Development
 
